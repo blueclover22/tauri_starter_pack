@@ -1,0 +1,26 @@
+[package]
+name = "tauri-starter-pack"
+version = "0.1.0"
+description = "Tauri v2 starter pack skeleton"
+authors = ["you"]
+edition = "2021"
+rust-version = "1.77.2"
+
+# 모바일(iOS/Android) 빌드를 위해 cdylib/staticlib 필수.
+[lib]
+name = "app_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-log = "2"
+log = "0.4"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[features]
+# 기본 빌드 시 사용. tauri dev/build 가 자동 설정한다.
+default = []
