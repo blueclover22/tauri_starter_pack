@@ -3,6 +3,8 @@
 > 본 프로젝트의 작업 규칙 SSOT (Single Source of Truth) 는 **`.claude/CLAUDE.md`** 다.
 > 이 문서는 외부 코딩 에이전트(Codex, Cursor, Aider 등) 를 위한 **얇은 진입점**이며, 자체 규칙을 정의하지 않는다.
 > 본 문서와 `.claude/CLAUDE.md` 가 다르면 **언제나 `.claude/CLAUDE.md` 를 우선** 따른다.
+>
+> **강제 범위 주의**: `.claude/settings.json`(verify 명령 allow, SessionStart 훅 등) 과 전역 `~/.claude/settings.json`(비밀파일 read-deny) 은 **Claude Code 에서만** 작동한다. 외부 에이전트(Codex / Cursor / Aider 등) 는 그 강제를 받지 않으므로, 셸 정책·승인 게이트 등은 **본 문서와 `.claude/CLAUDE.md` 의 prose 가 SSOT** 다.
 
 ## 작업 시작 전 필독
 
