@@ -77,7 +77,7 @@ await invokeTauri("job_run", { onEvent: channel });
 
 ## 5. capability
 
-- `core:event:allow-listen` / `core:event:allow-unlisten` permission 이 필요할 수 있다 — capabilities/default.json 에 추가.
+- listen/emit 사용 시 `core:event:default` permission 을 `capabilities/default.json` 에 추가한다 (granular 하게 좁히려면 `core:event:allow-listen` / `core:event:allow-unlisten`). deep-link 등 다른 문서와 표기를 `core:event:default` 로 통일한다.
 
 ---
 

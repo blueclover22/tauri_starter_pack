@@ -7,3 +7,24 @@ pub fn ping(request: &PingRequest) -> PingInfo {
         echoed_note: request.note.clone(),
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn ping_echoes_note() {
+        let info = ping(&PingRequest {
+            note: Some("hi".to_string()),
+        });
+        assert_eq!(info.message, "pong");
+        assert_eq!(info.echoed_note.as_deref(), Some("hi"));
+    }
+
+    #[test]
+    fn ping_without_note_returns_none() {
+        let info = ping(&PingRequest { note: None });
+        assert_eq!(info.message, "pong");
+        assert!(info.echoed_note.is_none());
+    }
+}
