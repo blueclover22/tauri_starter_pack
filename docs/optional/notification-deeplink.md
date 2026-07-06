@@ -69,7 +69,7 @@ pub fn run() {
     {
         builder = builder.plugin(tauri_plugin_single_instance::init(|_app, argv, _cwd| {
             // 런타임 스킴 등록 시 여기서 argv 의 딥링크도 처리한다
-            println!("new instance: {argv:?}");
+            log::info!("[deep-link] new instance: {argv:?}");
         }));
     }
 
@@ -92,6 +92,13 @@ const unlisten = await onOpenUrl((urls) => {
 
 리스너는 raw URL 을 그대로 신뢰하지 말고 파싱·검증 후 사용한다.
 
+> **cold-start 처리**: `onOpenUrl` 은 앱이 **이미 실행 중**일 때 오는 링크를 받는다. 링크로 앱이 처음 켜진 경우(cold-start)의 시작 URL 은 `getCurrent()` 로 별도 조회해야 누락되지 않는다.
+>
+> ```ts
+> import { getCurrent } from "@tauri-apps/plugin-deep-link";
+> const startUrls = await getCurrent(); // 앱을 띄운 링크(없으면 null)
+> ```
+
 ### 2.4 capability
 
 딥링크 이벤트 수신에는 보통 `core:event:default` 가 함께 필요하다. 모바일은 별도 capability 파일(`platforms: ["iOS", "android"]`)로 분리한다.
@@ -103,7 +110,50 @@ const unlisten = await onOpenUrl((urls) => {
 
 ---
 
-## 3. 도입 체크리스트
+## 3. 아키텍처 위치 · End-to-end 흐름
+
+두 기능 모두 IPC 경계이므로 component 가 직접 호출·수신하지 않고 feature api/hook 을 거친다. 딥링크는 등록 순서(single-instance 최우선)와 cold-start 처리가 관건이다.
+
+```text
+[알림]
+Component → useNotify hook → api
+  → isPermissionGranted() / requestPermission() → sendNotification()
+
+[딥링크] OS 가 myapp:// 링크 오픈
+  → (앱 실행 중)   single-instance 콜백에 argv 전달 → 기존 창 포커스 + 링크 처리
+                   onOpenUrl(urls) 리스너 → 파싱·검증 → 라우팅
+  → (cold-start)   getCurrent() 로 앱을 띄운 시작 링크 조회
+등록: single-instance 를 가장 먼저(§2.2), deep-link 다음.
+```
+
+---
+
+## 4. 뼈대 통합 접점
+
+| 접점                        | 뼈대 현재 상태          | 도입 시 변경                                                           |
+| :-------------------------- | :---------------------- | :--------------------------------------------------------------------- |
+| `lib.rs` builder            | log plugin + `app_ping` | single-instance(첫, `#[cfg(desktop)]`) → deep-link → notification 등록 |
+| `tauri.conf.json`           | 기본                    | (딥링크) `plugins.deep-link.desktop.schemes`                           |
+| `capabilities/default.json` | `core:default`          | `notification:default` / `deep-link:default` + `core:event:default`    |
+| 모바일 설정                 | —                       | associated domains(iOS) / intent filter(Android), 별도 capability 파일 |
+| feature 폴더                | `app` 샘플              | 알림·딥링크 호출/수신을 feature `api`/hook 경유                        |
+
+---
+
+## 5. 안티패턴 · 경계 주의
+
+| 패턴                                      | 이유 / 올바른 방향                                         |
+| :---------------------------------------- | :--------------------------------------------------------- |
+| deep link URL 을 검증 없이 신뢰           | 위조 콜백·주입 → 파싱·검증(스킴·host·state) 후 사용        |
+| single-instance 를 누락/나중에 등록       | 2차 실행 링크 유실·중복 창 → **첫 plugin** 으로 등록       |
+| cold-start 링크를 `onOpenUrl` 로만 처리   | 시작 링크 누락 → `getCurrent()` 병행 (§2.3)                |
+| 권한 확인 없이 `sendNotification` 호출    | 무음 실패 → `isPermissionGranted`/`requestPermission` 흐름 |
+| single-instance 콜백에서 `println!` 로깅  | 규약 위반 → `log::info!` (`coding-rules.md §13`)           |
+| component 에서 알림/딥링크 직접 호출·수신 | 레이어 위반 → feature `api`/hook 경유                      |
+
+---
+
+## 6. 도입 체크리스트
 
 | #   | 항목                                                                          | 확인 |
 | :-- | :---------------------------------------------------------------------------- | :--- |

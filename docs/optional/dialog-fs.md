@@ -7,7 +7,34 @@
 
 ---
 
-## 1. 접근 경로 결정 (중요)
+## 1. 아키텍처 위치 · End-to-end 흐름
+
+이 플러그인은 **"사용자가 명시적으로 고른 파일"** 에만 쓴다. 앱 내부 데이터(설정/DB)는 이 경로가 아니라 command(store/SQLite) 로 접근한다(§3). dialog/fs 호출은 IPC 경계이므로 component 가 아니라 feature api/hook 을 거친다.
+
+```text
+Component → useFilePicker hook → api/fileApi.ts
+  → dialog.open() / dialog.save()      # 사용자 선택 경로(string) 또는 null(취소)
+  → fs.readTextFile(path) / fs.writeTextFile(target)
+  → 결과를 hook 로컬 state 로
+```
+
+- `fs` 접근 가능 경로는 **capability scope** 로 제한된다(§6). 다이얼로그로 고른 임의 경로처럼 런타임에 결정되는 접근을 재실행 후에도 기억하려면 `tauri-plugin-persisted-scope` 를 함께 쓴다.
+- 사용자 취소(`open()`/`save()` 가 `null`)를 항상 분기 처리한다.
+
+---
+
+## 2. 뼈대 통합 접점
+
+| 접점                        | 뼈대 현재 상태          | 도입 시 변경                                                              |
+| :-------------------------- | :---------------------- | :------------------------------------------------------------------------ |
+| `lib.rs` builder            | log plugin + `app_ping` | `dialog` → `fs` → (`persisted-scope`) plugin 등록 (fs 를 scope 보다 먼저) |
+| `capabilities/default.json` | `core:default`          | `dialog:default` + 필요한 `fs:*` 만 + `fs:scope`                          |
+| feature 폴더                | `app` 샘플              | `features/<f>/api` 가 dialog/fs 호출, hook 경유                           |
+| `AppState`/`BootStage`      | —                       | **변경 없음** (frontend plugin JS API)                                    |
+
+---
+
+## 3. 접근 경로 결정 (중요)
 
 | 데이터 성격                          | 권장 경로                                                                  |
 | :----------------------------------- | :------------------------------------------------------------------------- |
@@ -18,7 +45,7 @@
 
 ---
 
-## 2. Dialog
+## 4. Dialog
 
 ```ts
 import { open, save, ask } from "@tauri-apps/plugin-dialog";
@@ -42,7 +69,7 @@ const yes = await ask("정말 삭제할까요?", { title: "확인", kind: "warni
 
 ---
 
-## 3. FS (scoped 접근)
+## 5. FS (scoped 접근)
 
 ```ts
 import { readTextFile, writeTextFile } from "@tauri-apps/plugin-fs";
@@ -62,7 +89,7 @@ tauri::Builder::default()
 
 ---
 
-## 4. capability
+## 6. capability
 
 ```jsonc
 // capabilities/default.json permissions 에 추가
@@ -77,7 +104,20 @@ tauri::Builder::default()
 
 ---
 
-## 5. 도입 체크리스트
+## 7. 안티패턴 · 경계 주의
+
+| 패턴                                   | 이유 / 올바른 방향                                      |
+| :------------------------------------- | :------------------------------------------------------ |
+| 앱 내부 데이터(설정/DB)를 fs 로 접근   | 계약·보안 우회 → command(store/SQLite) 경유 (§3)        |
+| `fs:allow-*` 를 무제한으로 부여        | 전체 디스크 노출 → `fs:scope` 로 경로 패턴 제한         |
+| `persisted-scope` 를 fs 보다 먼저 등록 | scope 확장이 동작하지 않음 → **fs 를 먼저** 등록        |
+| component 에서 dialog/fs 직접 호출     | 레이어 위반 → feature `api/` + hook 경유                |
+| 사용자 선택 경로를 검증 없이 신뢰      | 경로 조작·확장자 위장 → 정규화·확장자·크기 확인 후 사용 |
+| `open()`/`save()` 취소(`null`) 미처리  | 런타임 오류 → `null` 분기 필수                          |
+
+---
+
+## 8. 도입 체크리스트
 
 | #   | 항목                                                                   | 확인 |
 | :-- | :--------------------------------------------------------------------- | :--- |

@@ -8,7 +8,39 @@
 
 ---
 
-## 1. 서명 키 생성
+## 1. 아키텍처 위치 · End-to-end 흐름
+
+업데이트는 데스크톱 전용 도메인 feature(예: `features/app-update/`)로 감싼다. `check()` / `downloadAndInstall()` / `relaunch()` 는 모두 IPC 경계이므로 component 가 직접 호출하지 않고 api/hook 을 거친다(아키텍처 규칙).
+
+```text
+Component → useUpdate hook → api/updateApi.ts
+  → check()                          # endpoint 조회
+      · 새 버전 없음 → 종료(null)
+      · 새 버전 있음 → update 객체
+  → downloadAndInstall(onProgress)   # Started/Progress/Finished 이벤트
+      → 진행률을 hook 로컬 state 로 노출
+  → relaunch()                       # tauri-plugin-process
+```
+
+- 업데이트 서버는 endpoint 에서 **새 버전이 없으면 204**, 있으면 `latest.json`(버전·서명·플랫폼별 다운로드 URL)을 반환한다.
+- 서명 검증은 plugin 이 `pubkey` 로 자동 수행한다 — 검증 실패한 패키지는 설치되지 않는다.
+
+---
+
+## 2. 뼈대 통합 접점
+
+| 접점                        | 뼈대 현재 상태          | 도입 시 변경                                                        |
+| :-------------------------- | :---------------------- | :------------------------------------------------------------------ |
+| `lib.rs` builder            | log plugin + `app_ping` | `#[cfg(desktop)]` 로 `updater` + `process` plugin 등록              |
+| `tauri.conf.json`           | 기본                    | `bundle.createUpdaterArtifacts`, `plugins.updater.pubkey/endpoints` |
+| `capabilities/default.json` | `core:default`          | `updater:default` + `process:default`                               |
+| CI / 서명                   | —                       | `TAURI_SIGNING_PRIVATE_KEY(_PASSWORD)` 를 env(시크릿)로 주입        |
+| feature 폴더                | `app` 샘플              | `features/app-update/` (api + hook)                                 |
+| 플랫폼                      | desktop + mobile        | 모바일은 스토어 업데이트 — plugin 을 `#[cfg(desktop)]` 로 제외      |
+
+---
+
+## 3. 서명 키 생성
 
 업데이트 패키지는 서명이 필수다. 키를 한 번 생성한다.
 
@@ -22,7 +54,7 @@ pnpm tauri signer generate -w ~/.tauri/myapp.key
 
 ---
 
-## 2. tauri.conf.json
+## 4. tauri.conf.json
 
 ```json
 {
@@ -45,7 +77,7 @@ pnpm tauri signer generate -w ~/.tauri/myapp.key
 
 ---
 
-## 3. 등록 (lib.rs)
+## 5. 등록 (lib.rs)
 
 ```rust
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -71,7 +103,7 @@ pub fn run() {
 
 ---
 
-## 4. Frontend 흐름
+## 6. Frontend 흐름
 
 업데이트 확인·설치는 도메인 feature(예: `features/app-update/`)의 API/hook 으로 감싼다. component 직접 호출 금지(아키텍처 규칙).
 
@@ -102,7 +134,7 @@ export async function runUpdateFlow(onProgress?: (downloaded: number, total: num
 
 ---
 
-## 5. capability
+## 7. capability
 
 ```jsonc
 // capabilities/default.json permissions 에 추가
@@ -112,7 +144,20 @@ export async function runUpdateFlow(onProgress?: (downloaded: number, total: num
 
 ---
 
-## 6. 도입 체크리스트
+## 8. 안티패턴 · 경계 주의
+
+| 패턴                                            | 이유 / 올바른 방향                                           |
+| :---------------------------------------------- | :----------------------------------------------------------- |
+| 비공개 서명 키/패스워드를 저장소에 커밋         | 키 유출 시 위조 업데이트 배포 가능 → env(CI 시크릿)로만 주입 |
+| component 에서 `check()`/`relaunch()` 직접 호출 | 레이어 위반 → `features/<f>/api` + hook 경유                 |
+| updater plugin 을 모바일에도 등록               | 스토어 정책 위반·불필요 → `#[cfg(desktop)]` 분기             |
+| `bundle.createUpdaterArtifacts` 누락            | 서명 아티팩트·`latest.json` 미생성 → 업데이트 자체 불가      |
+| `pubkey` 누락/키 불일치                         | 서명 검증 실패로 설치 거부                                   |
+| `check()` 의 "새 버전 없음(null/204)" 미처리    | 흐름 오류 → `!update` 분기로 조기 종료                       |
+
+---
+
+## 9. 도입 체크리스트
 
 | #   | 항목                                                             | 확인 |
 | :-- | :--------------------------------------------------------------- | :--- |

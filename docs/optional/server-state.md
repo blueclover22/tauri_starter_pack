@@ -141,7 +141,51 @@ TanStack Query / Zustand 를 도입하면 hook 테스트가 필요해진다. IPC
 
 ---
 
-## 5. 도입 체크리스트
+## 5. 아키텍처 위치 · 레이어 확장
+
+이 세 라이브러리는 기존 FSD frontend 레이어를 **확장**할 뿐, 백엔드·capability·lifecycle 에는 영향이 없다.
+
+- TanStack Query 도입 시 프론트 레이어가 한 겹 늘어난다:
+
+  ```text
+  Component → Hook → Query/Mutation(model/queries·mutations) → API(<f>Api.ts) → Parser → invoke wrapper → ...
+  ```
+
+- Zustand 는 화면 간 공유 **클라이언트** 상태만 담고, 서버 데이터는 Query 가 소유한다 (둘을 복제하지 않는다).
+- Zod 는 두 경계에서 작동한다: ① 폼 입력 검증(`model/schema.ts`) ② IPC 응답·listener payload `safeParse`(api/parser).
+
+---
+
+## 6. 뼈대 통합 접점
+
+순수 frontend 도입이므로 Rust 측(`AppState`/`BootStage`/`capabilities`)은 건드리지 않는다.
+
+| 접점                                     | 뼈대 현재 상태   | 도입 시 변경                                               |
+| :--------------------------------------- | :--------------- | :--------------------------------------------------------- |
+| `app/providers/`                         | (도입 시 생성)   | `QueryClientProvider` 주입 (Query 도입 시)                 |
+| `shared/lib/queryClient.ts`              | 없음             | 단일 `QueryClient` 인스턴스                                |
+| feature `model/`                         | `use*.ts` hook   | `queries/`·`mutations/`·`store/`·`schema.ts` (필요 부분만) |
+| store 위치                               | 없음             | 전역 `shared/store/`, 도메인 한정 `feature/model/store/`   |
+| `test/mocks/tauri.ts`                    | (테스트 도입 시) | invoke mock helper                                         |
+| Rust(`capabilities`/`AppState`/`lib.rs`) | —                | **변경 없음** (frontend 전용)                              |
+
+---
+
+## 7. 안티패턴 · 경계 주의
+
+| 패턴                                                   | 이유 / 올바른 방향                                         |
+| :----------------------------------------------------- | :--------------------------------------------------------- |
+| query key 를 문자열 배열로 직접 작성                   | 오타·무효화 누락 → `queryKeys` 팩토리로 생성               |
+| 토큰·로그인 응답을 Zustand persist/`localStorage` 저장 | 세션 탈취 → 저장 금지 (`docs/optional/auth.md`)            |
+| 서버 데이터를 Zustand 에도 복제                        | 이중 소스·stale → 서버=Query, 클라 UI 상태=Zustand 로 분리 |
+| `staleTime`/`gcTime`/`retry` 무설정                    | 예측 불가한 재요청 → 명시적으로 설정                       |
+| IPC 응답을 type assertion 으로 신뢰                    | 런타임 형태 불일치 → Zod `safeParse`                       |
+| `retry` 를 무조건 켜기                                 | 재시도 불가 오류 반복 → `AppError.retryable` 기준          |
+| 컴포넌트에서 `invoke` 직접 호출                        | 레이어 위반 → API layer 경유                               |
+
+---
+
+## 8. 도입 체크리스트
 
 | #   | 항목                                                                                                           | 확인 |
 | :-- | :------------------------------------------------------------------------------------------------------------- | :--- |

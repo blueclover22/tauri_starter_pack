@@ -7,7 +7,52 @@
 
 ---
 
-## 1. 책임 분리
+## 1. 아키텍처 위치 · End-to-end 흐름
+
+인증은 **토큰의 소유권을 Rust 가 갖는다**는 한 가지 원칙 위에 서 있다. Renderer 는 "로그인됨/안됨"과 표시용 프로필만 알고, access/refresh token 은 절대 넘겨받지 않는다. 이 경계가 뼈대 보안 모델(`architecture.md §9`)의 핵심이다.
+
+```text
+[로그인]
+Component(LoginForm)
+  → useLoginMutation (model/mutations)
+  → authApi.login(credentials) (api/authApi.ts)
+  → invoke("auth_login") → commands.rs → service::login
+  → api.rs (HTTP 어댑터, backend-http.md) → 외부 인증 API
+  → 성공: access token → AppState(AuthState) 메모리 / refresh token → secure store
+  → 응답 DTO(식별자·표시명·만료 시각 등, raw token 제외)만 IpcResult 로 반환
+  → setAuthenticated(true) → 라우터 이동
+
+[부팅 세션 복원]
+BootStage::RestoreAuthSession
+  → secure store 의 refresh token 으로 세션 복원 시도
+  → 성공: AuthState 채움 / 실패: 비로그인 진입 (경고 후 계속)
+
+[만료]
+service 가 ERROR_AUTH_EXPIRED 감지
+  → AuthState::clear() (access token 폐기 + secure store 비우기 + emit auth-session-cleared)
+  → frontend listen("auth-session-cleared") → 캐시 무효화 → 로그인 화면
+```
+
+- `isAuthenticated`(Zustand)는 **UI 표시 분기용**일 뿐, 보안 판정 근거가 아니다. 보안 분기는 Rust session check 결과로 한다.
+- emit/listen 을 쓰므로 `docs/optional/events-channels.md`, 표시 상태는 `docs/optional/server-state.md` 와 함께 도입한다.
+
+---
+
+## 2. 뼈대 통합 접점
+
+| 접점                          | 뼈대 현재 상태                               | 도입 시 변경                                                                                  |
+| :---------------------------- | :------------------------------------------- | :-------------------------------------------------------------------------------------------- |
+| `AppState` (`store/state.rs`) | `teardown` 필드만                            | `AuthState`(토큰 메모리 보관) 를 필드로 추가 또는 `shared/auth/state.rs` 참조                 |
+| `BootStage` (`lifecycle.rs`)  | `InitPlugins`/`PrepareState`/`RegisterState` | `RestoreAuthSession` 추가 (실패 정책: **경고 후 계속**)                                       |
+| `lib.rs` builder              | log plugin + `app_ping`                      | secure store 를 plugin 으로 택한 경우만 등록 (`keyring` crate 는 plugin 아님)                 |
+| `capabilities/default.json`   | `core:default`                               | `auth-session-cleared` emit/listen 시 `core:event:default` 추가                               |
+| `shared/config.rs`            | `ERROR_*` / `EVENT_*`                        | `ERROR_AUTH_*`, endpoint path, `EVENT_AUTH_SESSION_CLEARED`                                   |
+| 신규 파일                     | —                                            | `features/auth/{commands,service,api,model,config}.rs`, `shared/auth/{state,secure_store}.rs` |
+| 의존 문서                     | —                                            | `backend-http.md`(토큰 주입) · `server-state.md`(표시 상태) · `events-channels.md`(emit)      |
+
+---
+
+## 3. 책임 분리
 
 | 데이터                          | 위치                                                     | 이유                                |
 | ------------------------------- | -------------------------------------------------------- | ----------------------------------- |
@@ -21,7 +66,7 @@
 
 ---
 
-## 2. Backend 구조 (`src-tauri/src/features/auth/`)
+## 4. Backend 구조 (`src-tauri/src/features/auth/`)
 
 | 파일          | 책임                                                        |
 | :------------ | :---------------------------------------------------------- |
@@ -40,9 +85,20 @@
 
 `AuthState::clear()` 는 access token 폐기 + secure store 비우기 + emit 발행을 묶는다.
 
+### secure store 구현 선택
+
+Tauri 공식 "secure-store" plugin 은 없다. 아래 중 하나를 택해 `secure_store.rs` 로 감싼다 — 뼈대는 미결정 상태이며 도입 시 확정한다.
+
+| 옵션                      | 성격                                                                                                | 적합                                  |
+| :------------------------ | :-------------------------------------------------------------------------------------------------- | :------------------------------------ |
+| `keyring` crate (권장)    | OS 자격증명 저장소 직접 사용 (macOS Keychain / Windows Credential Manager(DPAPI) / Linux libsecret) | 토큰 몇 개만 보관하는 일반적 경우     |
+| `tauri-plugin-stronghold` | 암호화된 vault 파일 + 패스워드                                                                      | 민감 데이터가 다수·암호화 파일이 필요 |
+
+어느 쪽이든 entry 이름을 앱 식별자 prefix 로 격리한다.
+
 ---
 
-## 3. Command 계약
+## 5. Command 계약
 
 | Command                | Input          | Output           | Error codes                                       | Retryable |
 | ---------------------- | -------------- | ---------------- | ------------------------------------------------- | --------- |
@@ -55,7 +111,7 @@
 
 ---
 
-## 4. 부트 시 세션 복원
+## 6. 부트 시 세션 복원
 
 `BootStage::PrepareState` 다음 단계에서 secure store 의 refresh token 으로 session 을 시도 복원한다. 실패 시 비로그인 상태로 진입하고, 사용자가 명시적으로 로그인하도록 한다.
 
@@ -66,7 +122,7 @@ BootStage::RestoreAuthSession // 실패 정책: 경고 후 계속
 
 ---
 
-## 5. Frontend 흐름
+## 7. Frontend 흐름
 
 - 로그인 화면 → `useLoginMutation` → `authApi.login(credentials)` → `auth_login` invoke.
 - 성공 시 `setAuthenticated(true)` + 라우터 이동.
@@ -75,7 +131,7 @@ BootStage::RestoreAuthSession // 실패 정책: 경고 후 계속
 
 ---
 
-## 6. 보안 체크리스트
+## 8. 보안 체크리스트
 
 | #   | 항목                                                                               | 확인 |
 | :-- | :--------------------------------------------------------------------------------- | :--- |
@@ -88,7 +144,7 @@ BootStage::RestoreAuthSession // 실패 정책: 경고 후 계속
 
 ---
 
-## 7. Anti-patterns
+## 9. Anti-patterns
 
 | 패턴                                        | 이유                                                |
 | ------------------------------------------- | --------------------------------------------------- |
@@ -97,3 +153,4 @@ BootStage::RestoreAuthSession // 실패 정책: 경고 후 계속
 | `tauri-plugin-store` 에 token 저장          | 비민감 설정과 인증 재료 책임이 섞임, 평문 저장 가능 |
 | `isAuthenticated === true` 만으로 보안 분기 | Rust session check 결과를 기준으로 판단해야 함      |
 | `{:?}` 로 LoginInfo 전체 로그               | token 평문 유출                                     |
+| 로그인 응답 DTO 에 raw token 필드 포함      | Rust 가 분리 후 표시 정보만 반환해야 함             |
