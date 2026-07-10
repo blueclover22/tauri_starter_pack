@@ -22,14 +22,17 @@ export default [
       },
     },
   },
+  // React Compiler / Rules of React 규칙 (eslint-plugin-react-hooks v6) — src 한정
+  ...reactHooks.configs["recommended-latest"].map((c) => ({
+    ...c,
+    files: ["src/**/*.{ts,tsx}"],
+  })),
   {
     files: ["src/**/*.{ts,tsx}"],
     plugins: {
-      "react-hooks": reactHooks,
       "import-x": importX,
     },
     rules: {
-      ...reactHooks.configs.recommended.rules,
       "import-x/no-restricted-paths": [
         "error",
         {

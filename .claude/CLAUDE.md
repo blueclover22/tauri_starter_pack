@@ -50,18 +50,19 @@
 
 기능 추가 시 필요한 것만 참조한다.
 
-| #   | 문서                                                                                | 도입 시점                                   |
-| :-- | :---------------------------------------------------------------------------------- | :------------------------------------------ |
-| 1   | [docs/optional/server-state.md](../docs/optional/server-state.md)                   | TanStack Query / Zustand / Zod 도입 시      |
-| 2   | [docs/optional/backend-http.md](../docs/optional/backend-http.md)                   | reqwest HTTP client 도입 시                 |
-| 3   | [docs/optional/auth.md](../docs/optional/auth.md)                                   | 인증·secure store 도입 시                   |
-| 4   | [docs/optional/sqlite.md](../docs/optional/sqlite.md)                               | SQLite 로컬 DB 도입 시                      |
-| 5   | [docs/optional/events-channels.md](../docs/optional/events-channels.md)             | emit/listen 또는 Channel<T> 도입 시         |
-| 6   | [docs/optional/command-examples.md](../docs/optional/command-examples.md)           | 도메인 command 추가 시                      |
-| 7   | [docs/optional/updater.md](../docs/optional/updater.md)                             | 자동 업데이트 도입 시 (데스크톱)            |
-| 8   | [docs/optional/dialog-fs.md](../docs/optional/dialog-fs.md)                         | 파일 다이얼로그·파일 접근 도입 시           |
-| 9   | [docs/optional/notification-deeplink.md](../docs/optional/notification-deeplink.md) | 알림·딥링크 도입 시                         |
-| 10  | [docs/optional/desktop-ux.md](../docs/optional/desktop-ux.md)                       | 트레이·창 상태·단일 인스턴스·opener 도입 시 |
+| #   | 문서                                                                                | 도입 시점                                           |
+| :-- | :---------------------------------------------------------------------------------- | :-------------------------------------------------- |
+| 1   | [docs/optional/server-state.md](../docs/optional/server-state.md)                   | TanStack Query / Zustand / Zod 도입 시              |
+| 2   | [docs/optional/backend-http.md](../docs/optional/backend-http.md)                   | reqwest HTTP client 도입 시                         |
+| 3   | [docs/optional/auth.md](../docs/optional/auth.md)                                   | 인증·secure store 도입 시                           |
+| 4   | [docs/optional/sqlite.md](../docs/optional/sqlite.md)                               | SQLite 로컬 DB 도입 시                              |
+| 5   | [docs/optional/events-channels.md](../docs/optional/events-channels.md)             | emit/listen 또는 Channel<T> 도입 시                 |
+| 6   | [docs/optional/command-examples.md](../docs/optional/command-examples.md)           | 도메인 command 추가 시                              |
+| 7   | [docs/optional/updater.md](../docs/optional/updater.md)                             | 자동 업데이트 도입 시 (데스크톱)                    |
+| 8   | [docs/optional/dialog-fs.md](../docs/optional/dialog-fs.md)                         | 파일 다이얼로그·파일 접근 도입 시                   |
+| 9   | [docs/optional/notification-deeplink.md](../docs/optional/notification-deeplink.md) | 알림·딥링크 도입 시                                 |
+| 10  | [docs/optional/desktop-ux.md](../docs/optional/desktop-ux.md)                       | 트레이·창 상태·단일 인스턴스·opener 도입 시         |
+| 11  | [docs/optional/react-compiler.md](../docs/optional/react-compiler.md)               | React Compiler 동작 이해·예외·비활성 시 (기본 활성) |
 
 ## 검증 명령
 

@@ -1,12 +1,15 @@
 import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
 import tailwindcss from "@tailwindcss/vite";
 import path from "node:path";
 
 const host = process.env.TAURI_DEV_HOST;
 
 export default defineConfig({
-  plugins: [react(), tailwindcss()],
+  // React Compiler(자동 메모이제이션): plugin-react 6은 Babel-free(Oxc)라
+  // 컴파일러 Babel 패스를 @rolldown/plugin-babel 로 react() "앞에" 둔다.
+  plugins: [babel({ presets: [reactCompilerPreset()] }), react(), tailwindcss()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),

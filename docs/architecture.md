@@ -39,6 +39,7 @@
 - Node.js: LTS 24 (24.x)
 - Package Manager: pnpm
 - Build Tool: Vite
+- Optimization: React Compiler (자동 메모이제이션, **기본 활성** — 동작·비활성은 `docs/optional/react-compiler.md`)
 - Styling: Tailwind CSS v4 (유틸리티 퍼스트, CSS-first 설정)
 - Icons: Heroicons (`@heroicons/react`)
 - Testing: Vitest + React Testing Library
