@@ -78,5 +78,5 @@ plugins: [react(), tailwindcss()]; // babel(...) 삭제
 ## 5. 트레이드오프 메모
 
 - **Babel 재도입 비용**: 모든 jsx/tsx에 Babel 패스가 걸려 Vite 8/Oxc의 Babel-free 속도 이점을 부분 반납한다. 스타터 규모에서는 무시할 수준이나, 대형 앱에서는 dev/build 시간 증가를 관찰한다.
-- **vitest 미적용**: 테스트는 컴파일러 없이 실행된다(의미 보존이라 검증에 문제없음, 속도 유지).
+- **vitest 미적용 (의도적)**: 컴파일러는 dev/build(Vite)에만 적용하고 테스트에는 태우지 않는다. debug/dev 환경은 prod와 같아야 하지만, 테스트는 *의미*를 검증하는 별개 환경이고 컴파일러는 그 의미를 바꾸지 않는 최적화라 prod에 맞출 필요가 없다(속도 유지, 참조 identity 단언 fragile 회피). 드문 miscompilation 갭은 ESLint Rules of React(활성) + E2E 가 안전망이다.
 - **미래 경로**: Oxc/swc-native react-compiler 통합이 나오면 `@rolldown/plugin-babel` 왕복을 제거하고 재배선할 수 있다.
