@@ -101,7 +101,7 @@
 - 같은 feature 내부에서는 상대 경로를 우선한다.
 - feature 외부에서는 feature `index.ts` public API 를 사용한다.
 - 순환 import 를 만들지 않는다.
-- `features/<X>` 는 다른 `features/<other>` 를 직접 import 하지 않는다 — cross-feature 합성은 `widgets/`(Frontend) / `workflows/`(Backend) 로 끌어올린다. type-only import 는 허용, 런타임 의존은 금지.
+- `features/<X>` 는 다른 `features/<other>` 를 직접 import 하지 않는다 (타입 포함) — 공유 타입은 `entities/` 로, cross-feature 합성은 `widgets/`(Frontend) / `workflows/`(Backend) 로 끌어올린다. (ESLint `boundaries/dependencies` 로 강제.)
 
 ---
 

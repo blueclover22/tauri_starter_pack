@@ -27,8 +27,7 @@ impl<T: Serialize> IpcResult<T> {
         }
     }
 
-    /// 비즈니스 에러 응답 helper. 도메인 command 추가 시 사용한다 (뼈대 단계 미사용).
-    #[allow(dead_code)]
+    /// 비즈니스 에러 응답 helper (Ok-Only). 예: features/app 의 app_ping 입력 검증.
     pub fn err(code: &str, message: impl Into<String>, retryable: bool) -> Self {
         Self {
             success: false,

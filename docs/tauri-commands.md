@@ -50,15 +50,13 @@ export const appApi = {
 
 ```rust
 // src-tauri/src/features/app/commands.rs
+// command 는 얇은 진입점 — 로직은 service, 에러 코드는 config 에 둔다 (Ok-Only).
 #[tauri::command]
-pub async fn app_ping(
-    request: PingRequest,
-) -> Result<IpcResult<PingInfo>, String> {
-    let info = PingInfo {
-        message: "pong".to_string(),
-        echoed_note: request.note,
-    };
-    Ok(response::ok(info))
+pub async fn app_ping(request: PingRequest) -> Result<IpcResult<PingInfo>, String> {
+    match service::ping(&request) {
+        Ok(info) => Ok(response::ok(info)),
+        Err(message) => Ok(IpcResult::err(config::ERROR_APP_PING_FAILED, message, false)),
+    }
 }
 ```
 

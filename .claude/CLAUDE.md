@@ -63,6 +63,7 @@
 | 9   | [docs/optional/notification-deeplink.md](../docs/optional/notification-deeplink.md) | 알림·딥링크 도입 시                                 |
 | 10  | [docs/optional/desktop-ux.md](../docs/optional/desktop-ux.md)                       | 트레이·창 상태·단일 인스턴스·opener 도입 시         |
 | 11  | [docs/optional/react-compiler.md](../docs/optional/react-compiler.md)               | React Compiler 동작 이해·예외·비활성 시 (기본 활성) |
+| 12  | [docs/optional/routing.md](../docs/optional/routing.md)                             | 화면 2개 이상(라우팅·pages layer) 도입 시           |
 
 ## 검증 명령
 

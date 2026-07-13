@@ -94,8 +94,8 @@ tauri::Builder::default()
 ```jsonc
 // capabilities/default.json permissions 에 추가
 "dialog:default",
-"fs:default",
-// 필요한 동작만 (최소 권한) — 예시
+// fs:default 는 편의 baseline 이다. 엄격한 최소 권한이 목표면 이를 생략하고
+// 아래처럼 필요한 fs:allow-* 만 부여한 뒤 fs:scope 로 경로를 좁힌다.
 "fs:allow-read-text-file",
 "fs:allow-write-text-file"
 ```

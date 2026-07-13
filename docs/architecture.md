@@ -50,6 +50,13 @@
 - Client UI State: 컴포넌트 로컬 state 우선, 화면 간 공유 상태는 Zustand
 - Validation: Zod (사용자 입력 및 command payload)
 
+> **뼈대의 의도적 비목표** (필요 시 다운스트림이 도입): 스타터는 단일 화면·최소 구성을 유지하려고 다음을 **일부러 포함하지 않는다**. 각 항목은 도입 지침만 남긴다.
+>
+> - **라우팅**: 화면이 2개 이상이면 `docs/optional/routing.md` 참조 (라우터 선정 + `app/routes/`·`pages/` 구성).
+> - **전역 ErrorBoundary / 로딩·에러·빈 상태 UI primitive**: `shared/ui/` 에 도입. 뼈대는 `PingPanel` 의 인라인 처리로만 예시한다.
+> - **i18n·테마(라이트/다크) 전환**: 미포함. 테마 전환 도입 시 `globals.css` 의 `@theme` 직접 토큰(§12)을 재구성해야 한다.
+> - **Frontend 로거**: 위치는 `shared/lib/logger` 로 예약. 로깅 접두사 규약은 §13(coding-rules).
+
 ### Desktop / Mobile (Tauri / Rust)
 
 뼈대 기본 스택:
@@ -207,10 +214,10 @@ type AppError = { code: string; message: string; retryable: boolean };
 
 - `pages/<P>` 가 다른 `pages/<Q>` 를 직접 import 하지 않는다.
 - `widgets/<W>` 가 다른 `widgets/<W2>` 를 import 하지 않는다.
-- `features/<X>` 가 다른 `features/<other>` 를 import 하지 않는다 (type-only import 는 예외 허용).
+- `features/<X>` 가 다른 `features/<other>` 를 import 하지 않는다 (타입도 예외 없음 — 공유 타입은 `entities/` 로, 합성은 `widgets/` 로).
 - `shared/**` 은 어떤 상위 layer 도 import 하지 않는다.
 
-본 규칙은 ESLint `import-x/no-restricted-paths` 로 빌드 시점에 강제한다.
+본 규칙 — **layer 역방향, 같은 layer 의 slice 간 cross-import, public API 우회 deep-import** 전부 — 은 ESLint `eslint-plugin-boundaries` 의 `boundaries/dependencies` 규칙으로 **빌드 시점에 완전 강제**한다. slice 는 자기 자신만 deep import 할 수 있고, 다른 slice 는 `index.ts`(public API)로만 접근한다(shared/app 은 단일 barrel 이 없어 내부 경로 허용). import 해석을 위해 `eslint-import-resolver-typescript` 가 필요하다(없으면 경계가 무력화). 상세는 `eslint.config.js` 참조.
 
 ### 7.3 Segment — 5 segment
 
@@ -224,7 +231,7 @@ type AppError = { code: string; message: string; retryable: boolean };
 | `lib/`    | 도메인 내부 순수 함수   | formatter, validator helper                            |
 | `config/` | 도메인 상수             | 에러 코드, 도메인 enum                                 |
 
-> 도메인 타입·Zod schema 는 feature 의 `model/` 이 아니라 `entities/<도메인>/model/` 에 둔다.
+> **여러 feature 가 공유하는 도메인 명사 타입·엔티티 schema** 는 feature 가 아니라 `entities/<도메인>/model/` 에 둔다 (SSOT). **단일 feature 전용 응답 타입·폼 입력 검증 schema**(예: `LoginFormValues`)는 그 feature 의 `api/`·`model/` 에 둬도 무방하며, 공유가 필요해지는 시점에 `entities/` 로 승격한다. (폼 schema 예시: `docs/optional/server-state.md §3`)
 
 ### 7.4 Frontend 트리 (뼈대)
 
@@ -397,7 +404,7 @@ src-tauri/
 - feature 외부에서 feature 내부 깊은 경로를 직접 참조하지 않는다. `index.ts` 가 public API 경계다.
 - app · pages · widgets · 다른 features 는 모두 대상 feature 의 `index.ts` 만 사용한다.
 - entities · widgets · pages 도 동일하게 같은 layer 내 다른 slice 는 `index.ts` 경유.
-- 본 정책은 ESLint `import-x/no-restricted-paths` 로 강제한다.
+- 본 정책(public API·deep-import 금지)은 `eslint-plugin-boundaries` 의 `boundaries/dependencies` 로 빌드 시점에 강제된다(§7.2).
 
 ---
 

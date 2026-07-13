@@ -102,12 +102,14 @@ Tauri 공식 "secure-store" plugin 은 없다. 아래 중 하나를 택해 `secu
 
 | Command                | Input          | Output           | Error codes                                       | Retryable |
 | ---------------------- | -------------- | ---------------- | ------------------------------------------------- | --------- |
-| `auth_login`           | `LoginRequest` | `LoginInfo`      | `ERROR_AUTH_LOGIN_FAILED`, `ERROR_NETWORK_*`      | true      |
+| `auth_login`           | `LoginRequest` | `LoginInfo`      | `ERROR_AUTH_LOGIN_FAILED`, `ERROR_NETWORK_*`      | false\*   |
 | `auth_logout`          | -              | `SuccessPayload` | -                                                 | false     |
 | `auth_session_check`   | -              | `SessionInfo`    | `ERROR_AUTH_EXPIRED`                              | false     |
 | `auth_session_restore` | -              | `SessionInfo`    | `ERROR_AUTH_EXPIRED`, `ERROR_AUTH_RESTORE_FAILED` | false     |
 
 응답 DTO 에 raw token 을 포함하지 않는다 (사용자 식별자·표시 이름·만료 시각 등만).
+
+> \* `auth_login` 자체(자격 실패 `ERROR_AUTH_LOGIN_FAILED`)는 재시도 무의미하므로 `retryable=false` 다 (base `tauri-guide.md §8` auth 카테고리 정책). 네트워크 계층 실패(`ERROR_NETWORK_*`)만 해당 error 코드 기준으로 재시도 가능하다.
 
 ---
 
