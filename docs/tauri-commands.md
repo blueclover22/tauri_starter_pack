@@ -33,12 +33,18 @@
 ```ts
 // src/features/app/api/appApi.ts
 import { invokeTauri } from "@/shared/lib/tauri/invoke";
+import { parsePingInfo } from "./appParsers";
+import type { PingInfo } from "./appParsers";
 
 export type PingRequest = { note?: string };
-export type PingInfo = { message: string; echoedNote?: string };
 
 export const appApi = {
-  ping: (note?: string): Promise<PingInfo> => invokeTauri("app_ping", { request: { note } }),
+  ping: async (note?: string): Promise<PingInfo> => {
+    const raw = await invokeTauri<unknown>("app_ping", {
+      request: { note } satisfies PingRequest,
+    });
+    return parsePingInfo(raw);
+  },
 };
 ```
 

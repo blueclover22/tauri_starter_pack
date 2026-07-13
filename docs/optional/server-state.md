@@ -192,5 +192,5 @@ TanStack Query / Zustand 를 도입하면 hook 테스트가 필요해진다. IPC
 | 1   | `pnpm add @tanstack/react-query` / `zustand` / `zod` 중 도입 대상만 설치                                       | □    |
 | 2   | `src/shared/lib/queryClient.ts` 생성, `app/providers/` 에서 `QueryClientProvider` 주입 (Query 도입 시)         | □    |
 | 3   | feature 의 `model/queries/`, `model/mutations/`, `model/store/`, `model/schema.ts` 디렉토리 생성 (필요 부분만) | □    |
-| 4   | `src/test/mocks/tauri.ts` 추가, `vitest.setup.ts` 에서 import (Query/Mutation 테스트 필요 시)                  | □    |
+| 4   | `src/test/mocks/tauri.ts` 추가, `src/test/setup.ts` 에서 import (Query/Mutation 테스트 필요 시)                | □    |
 | 5   | `architecture.md §10 State Management` 의 매트릭스와 본 문서가 일치하는지 확인                                 | □    |
