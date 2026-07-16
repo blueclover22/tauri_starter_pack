@@ -45,3 +45,6 @@ src-tauri/gen/apple/
 
 # Test coverage
 coverage/
+
+.claude/settings.local.json
+.claude/worktrees
