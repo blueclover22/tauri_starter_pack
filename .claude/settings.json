@@ -22,7 +22,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "echo Before non-trivial changes read docs/coding-rules.md and docs/architecture.md first."
+            "command": "echo Before non-trivial changes read docs/architecture.md, docs/tauri-guide.md, docs/tauri-commands.md and docs/coding-rules.md first."
           }
         ]
       }

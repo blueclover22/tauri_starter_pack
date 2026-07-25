@@ -186,8 +186,8 @@ export const appApi = {
 - 직렬화는 공통 `response::ok()` helper 로 통일한다. command 별 error code 는 feature `config.rs` 에 모은다.
 
 ```rust
-// config.rs — feature 별 에러 코드 상수 (한 도메인 = 한 카테고리)
-pub const ERROR_APP_PING_FAILED: &str = "ERROR_APP_PING_FAILED";
+// config.rs — feature 별 에러 코드 상수 (한 도메인 = 한 카테고리, §8 분류표의 카테고리를 쓴다)
+pub const ERROR_VALIDATION_PING_FAILED: &str = "ERROR_VALIDATION_PING_FAILED";
 
 // commands.rs — Ok-Only: 비즈니스 에러도 Ok(IpcResult::err(...)) 로 반환한다.
 // service 는 Result<_, String>(Err=message), command 가 code·retryable 을 부여한다.
@@ -195,7 +195,7 @@ pub const ERROR_APP_PING_FAILED: &str = "ERROR_APP_PING_FAILED";
 pub async fn app_ping(request: PingRequest) -> Result<IpcResult<PingInfo>, String> {
     match service::ping(&request) {
         Ok(info) => Ok(response::ok(info)),
-        Err(message) => Ok(IpcResult::err(config::ERROR_APP_PING_FAILED, message, false)),
+        Err(message) => Ok(IpcResult::err(config::ERROR_VALIDATION_PING_FAILED, message, false)),
     }
 }
 ```

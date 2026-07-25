@@ -13,7 +13,7 @@ pub async fn app_ping(request: PingRequest) -> Result<IpcResult<PingInfo>, Strin
     match service::ping(&request) {
         Ok(info) => Ok(response::ok(info)),
         Err(message) => Ok(IpcResult::err(
-            config::ERROR_APP_PING_FAILED,
+            config::ERROR_VALIDATION_PING_FAILED,
             message,
             false,
         )),

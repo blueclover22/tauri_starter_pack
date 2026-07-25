@@ -52,7 +52,7 @@ export default [
     rules: {
       // FSD 경계를 하나의 규칙으로 강제한다 (eslint-plugin-boundaries v7):
       //  · layer 의존 방향(strictly-below)
-      //  · 같은 layer 의 다른 slice cross-import 금지 (같은 slice 만 deep 허용)
+      //  · 같은 layer 의 다른 slice cross-import 금지 (같은 slice 만 deep 허용, 예외로 entities 간은 index.ts 경유 허용)
       //  · 하위 slice 는 public API(index.ts)로만 진입 — deep-import 금지 (shared/app 은 deep 허용)
       "boundaries/dependencies": [
         "error",
@@ -107,6 +107,13 @@ export default [
                     captured: { slice: "{{ from.element.captured.slice }}" },
                   },
                 },
+              },
+            },
+            // 같은 layer cross-slice 예외 — entities 간은 public API(index)로만 허용 (architecture §7.1)
+            {
+              from: { element: { type: "entities" } },
+              allow: {
+                to: { element: { type: "entities", fileInternalPath: "index.{ts,tsx}" } },
               },
             },
             // 하위 layer 는 public API(index)로만, shared 는 deep 허용

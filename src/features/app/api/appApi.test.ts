@@ -28,11 +28,11 @@ describe("appApi.ping", () => {
   it("success: false → AppError 로 정규화하여 throw 한다", async () => {
     mockInvoke.mockResolvedValueOnce({
       success: false,
-      error: { code: "ERROR_APP_PING_FAILED", message: "실패", retryable: false },
+      error: { code: "ERROR_VALIDATION_PING_FAILED", message: "실패", retryable: false },
     });
 
     await expect(appApi.ping()).rejects.toMatchObject({
-      code: "ERROR_APP_PING_FAILED",
+      code: "ERROR_VALIDATION_PING_FAILED",
     });
   });
 

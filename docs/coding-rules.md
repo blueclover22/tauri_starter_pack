@@ -178,9 +178,10 @@ TanStack Query 도입 시 layer 가 `Component → Hook → Query/Mutation → A
 
 ## 13. Import Path
 
-- 외부 디렉토리 참조는 `@` alias 사용 (`@/shared/...`, `@/features/...`).
+- slice(feature) 외부 참조는 `@` alias 사용 (`@/shared/...`, `@/features/...`).
 - 같은 디렉토리 (`./`) 는 그대로.
-- 상대 경로 (`../`, `../../`) 사용 금지 — 가독성/리팩토링 친화 위반.
+- 같은 slice 내부의 세그먼트 간 참조는 상대 경로(`../api/appApi` 등)를 허용한다 (§7 "같은 feature 내부에서는 상대 경로 우선" 과 동일 규칙).
+- slice 경계를 넘는 상대 경로 (`../../shared/...` 등) 사용 금지 — 가독성/리팩토링 친화 위반. slice 밖은 항상 `@` alias 를 쓴다. (경계 위반 자체는 ESLint `boundaries/dependencies` 가 차단)
 - 설정 정합: `@/*` → `./src` 를 `tsconfig.json`(`paths`, 타입체크·에디터용)과 런타임 alias 가 일치시킨다. 런타임 alias 는 `vite.shared.ts` 한 곳에서 정의해 `vite.config.ts`·`vitest.config.ts` 가 공유한다(복붙 금지).
 
 ---

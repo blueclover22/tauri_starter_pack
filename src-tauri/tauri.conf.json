@@ -13,6 +13,7 @@
     "withGlobalTauri": false,
     "windows": [
       {
+        "label": "main",
         "title": "Tauri Starter Pack",
         "width": 960,
         "height": 720,

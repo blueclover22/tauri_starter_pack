@@ -54,8 +54,8 @@
 >
 > - **라우팅**: 화면이 2개 이상이면 `docs/optional/routing.md` 참조 (라우터 선정 + `app/routes/`·`pages/` 구성).
 > - **전역 ErrorBoundary / 로딩·에러·빈 상태 UI primitive**: `shared/ui/` 에 도입. 뼈대는 `PingPanel` 의 인라인 처리로만 예시한다.
-> - **i18n·테마(라이트/다크) 전환**: 미포함. 테마 전환 도입 시 `globals.css` 의 `@theme` 직접 토큰(§12)을 재구성해야 한다.
-> - **Frontend 로거**: 위치는 `shared/lib/logger` 로 예약. 로깅 접두사 규약은 §13(coding-rules).
+> - **i18n·테마(라이트/다크) 전환**: 미포함. 테마 전환 도입 시 `globals.css` 의 `@theme` 직접 토큰(§11)을 재구성해야 한다.
+> - **Frontend 로거**: 위치는 `shared/lib/logger` 로 예약. 로깅 접두사 규약은 `tauri-guide.md §13`(Logging, `[ui:domain]`).
 
 ### Desktop / Mobile (Tauri / Rust)
 
@@ -83,7 +83,7 @@
 4. **Small diff** — 큰 구조 변경보다 작은 diff 를 우선하고, 기존 패턴이 있으면 먼저 그 패턴에 맞춘다. 구조 정리와 기능 변경을 한 번에 섞지 않는다.
 5. **Cross-feature 경계** — features 간 직접 import 는 금지한다. 여러 feature 를 합성하는 흐름은 Frontend 는 `widgets/`, Backend 는 `workflows/` 로 끌어올린다.
 6. **Public API** — 각 slice 는 `index.ts` 로만 외부에 노출한다. deep import 금지.
-7. **Layer import (strictly below)** — 상위 layer 만 하위 layer 를 import 한다. 같은 layer 의 다른 slice 는 `index.ts` 경유.
+7. **Layer import (strictly below)** — 상위 layer 만 하위 layer 를 import 한다. 같은 layer 의 다른 slice import 는 금지하며, `entities` 간에만 `index.ts` 경유를 허용한다 (§7.1).
 8. **신규 구조는 기존 패턴 답습** — 새 모델·도메인·기능을 만들 때 기존 동종 구조를 먼저 참조해 동일 패턴을 따른다. 이탈이 필요하면 사유를 남긴다.
 
 > `features/` 의 의미: 본 구조의 `features/` 는 FSD 공식의 "재사용 가능한 사용자 액션 단위" 가 아니라 **도메인 슬라이스(Bounded Context)** 를 의미한다.
@@ -210,14 +210,14 @@ type AppError = { code: string; message: string; retryable: boolean };
 
 ### 7.2 import rule — strictly below
 
-상위 layer 는 하위 layer 만 import 한다. 같은 layer 의 다른 slice 는 `index.ts` 경유 외 금지.
+상위 layer 는 하위 layer 만 import 한다. 같은 layer 의 다른 slice import 는 금지한다 (`entities` 간에만 `index.ts` 경유 허용).
 
 - `pages/<P>` 가 다른 `pages/<Q>` 를 직접 import 하지 않는다.
 - `widgets/<W>` 가 다른 `widgets/<W2>` 를 import 하지 않는다.
 - `features/<X>` 가 다른 `features/<other>` 를 import 하지 않는다 (타입도 예외 없음 — 공유 타입은 `entities/` 로, 합성은 `widgets/` 로).
 - `shared/**` 은 어떤 상위 layer 도 import 하지 않는다.
 
-본 규칙 — **layer 역방향, 같은 layer 의 slice 간 cross-import, public API 우회 deep-import** 전부 — 은 ESLint `eslint-plugin-boundaries` 의 `boundaries/dependencies` 규칙으로 **빌드 시점에 완전 강제**한다. slice 는 자기 자신만 deep import 할 수 있고, 다른 slice 는 `index.ts`(public API)로만 접근한다(shared/app 은 단일 barrel 이 없어 내부 경로 허용). import 해석을 위해 `eslint-import-resolver-typescript` 가 필요하다(없으면 경계가 무력화). 상세는 `eslint.config.js` 참조.
+본 규칙 — **layer 역방향, 같은 layer 의 slice 간 cross-import, public API 우회 deep-import** 전부 — 은 ESLint `eslint-plugin-boundaries` 의 `boundaries/dependencies` 규칙으로 **빌드 시점에 완전 강제**한다. slice 는 자기 자신만 deep import 할 수 있고, 접근이 허용된 다른 slice 는 `index.ts`(public API)로만 접근한다(shared/app 은 단일 barrel 이 없어 내부 경로 허용). import 해석을 위해 `eslint-import-resolver-typescript` 가 필요하다(없으면 경계가 무력화). 상세는 `eslint.config.js` 참조.
 
 ### 7.3 Segment — 5 segment
 
@@ -403,7 +403,7 @@ src-tauri/
 
 - feature 외부에서 feature 내부 깊은 경로를 직접 참조하지 않는다. `index.ts` 가 public API 경계다.
 - app · pages · widgets · 다른 features 는 모두 대상 feature 의 `index.ts` 만 사용한다.
-- entities · widgets · pages 도 동일하게 같은 layer 내 다른 slice 는 `index.ts` 경유.
+- 같은 layer 내 다른 slice import 는 금지한다. 예외로 `entities` 는 다른 entity 를 `index.ts` 경유로 참조할 수 있다 (§7.1).
 - 본 정책(public API·deep-import 금지)은 `eslint-plugin-boundaries` 의 `boundaries/dependencies` 로 빌드 시점에 강제된다(§7.2).
 
 ---
@@ -422,7 +422,7 @@ src-tauri/
 - 비즈니스 에러를 포함한 모든 결과를 `Ok(IpcResult<T>)` 로 반환한다 (Ok-Only). 시스템 panic 만 `Err(String)`.
 - error code 는 feature `config.rs` 또는 `shared/config.rs` 상수로 관리한다.
 
-`AppError` code 는 `ERROR_<카테고리>_<상세>` 형식이며 카테고리로 분류한다 (`ERROR_AUTH_*`, `ERROR_NETWORK_*`, `ERROR_VALIDATION_*`, `ERROR_CONFIG_*`, `ERROR_UNKNOWN` 등). 하나의 도메인은 하나의 카테고리만 쓰고, `retryable` 로 UI 재시도 가능 여부를 전달한다. 상세는 `tauri-guide.md §8`.
+`AppError` code 는 `ERROR_<카테고리>_<상세>` 형식이며 카테고리로 분류한다 (`ERROR_AUTH_*`, `ERROR_NETWORK_*`, `ERROR_VALIDATION_*`, `ERROR_CONFIG_*`, `ERROR_UNKNOWN`, `ERROR_TAURI_*`(invoke wrapper 정규화) 등). 하나의 도메인은 하나의 카테고리만 쓰고, `retryable` 로 UI 재시도 가능 여부를 전달한다. 상세는 `tauri-guide.md §8`.
 
 ---
 

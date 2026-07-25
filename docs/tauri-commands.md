@@ -24,9 +24,9 @@
 
 ## 뼈대 샘플 Command
 
-| Command    | Input                  | Output                                                | Error codes             | Retryable |
-| :--------- | :--------------------- | :---------------------------------------------------- | :---------------------- | :-------- |
-| `app_ping` | `request: PingRequest` | `PingInfo = { message: string; echoedNote?: string }` | `ERROR_APP_PING_FAILED` | true      |
+| Command    | Input                  | Output                                                | Error codes                    | Retryable |
+| :--------- | :--------------------- | :---------------------------------------------------- | :----------------------------- | :-------- |
+| `app_ping` | `request: PingRequest` | `PingInfo = { message: string; echoedNote?: string }` | `ERROR_VALIDATION_PING_FAILED` | false     |
 
 샘플 command 는 IPC 파이프(Renderer → invoke wrapper → Rust command → response::ok → IpcResult → Renderer parser)가 끝에서 끝까지 동작함을 검증하는 용도다. 실제 기능을 추가하면 제거해도 무방하다.
 
@@ -55,7 +55,7 @@ export const appApi = {
 pub async fn app_ping(request: PingRequest) -> Result<IpcResult<PingInfo>, String> {
     match service::ping(&request) {
         Ok(info) => Ok(response::ok(info)),
-        Err(message) => Ok(IpcResult::err(config::ERROR_APP_PING_FAILED, message, false)),
+        Err(message) => Ok(IpcResult::err(config::ERROR_VALIDATION_PING_FAILED, message, false)),
     }
 }
 ```
