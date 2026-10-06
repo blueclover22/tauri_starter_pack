@@ -109,7 +109,7 @@ Tauri 공식 "secure-store" plugin 은 없다. 아래 중 하나를 택해 `secu
 
 응답 DTO 에 raw token 을 포함하지 않는다 (사용자 식별자·표시 이름·만료 시각 등만).
 
-> \* `auth_login` 자체(자격 실패 `ERROR_AUTH_LOGIN_FAILED`)는 재시도 무의미하므로 `retryable=false` 다 (base `tauri-guide.md §8` auth 카테고리 정책). 네트워크 계층 실패(`ERROR_NETWORK_*`)만 해당 error 코드 기준으로 재시도 가능하다.
+> \* `auth_login` 자체(자격 실패 `ERROR_AUTH_LOGIN_FAILED`)는 재시도 무의미하므로 `retryable=false` 다 (`tauri-guide.md §8` auth 카테고리 정책). 카테고리는 도메인이 아니라 에러의 처리 방식으로 고르므로, 같은 command 의 네트워크 계층 실패(`ERROR_NETWORK_*`)는 해당 error 코드 기준으로 재시도 가능하다.
 
 ---
 

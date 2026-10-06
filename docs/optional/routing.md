@@ -23,7 +23,7 @@ pnpm add react-router
 
 ## 2. 배선 — app layer 에서 합성
 
-라우터는 **app layer** 가 소유한다(§architecture.md 7.1). `App` 이 직접 화면을 렌더하던 자리를 라우터로 교체한다.
+라우터는 **app layer** 가 소유한다(`architecture.md §7.1`). `App` 이 직접 화면을 렌더하던 자리를 라우터로 교체한다.
 
 ```tsx
 // src/app/routes/AppRouter.tsx (도입 시 신설)
@@ -41,7 +41,7 @@ export function AppRouter() {
 ```
 
 ```tsx
-// src/app/App.tsx — main.tsx 의 App.tsx seam 주석 위치에 라우터를 끼운다
+// src/app/App.tsx — App.tsx 의 seam 주석 위치에 라우터를 끼운다
 import { AppRouter } from "@/app/routes/AppRouter";
 
 export function App() {
@@ -62,7 +62,7 @@ export function App() {
 
 ## 3. pages slice — 라우트 1:1 컨테이너
 
-각 화면은 `pages/<page>` slice 한 개다. `pages` 는 **가드·로딩·에러 boundary 배치**와 widgets/features 합성만 담당하고, 도메인 로직은 두지 않는다(§architecture.md 7.1).
+각 화면은 `pages/<page>` slice 한 개다. `pages` 는 **가드·로딩·에러 boundary 배치**와 widgets/features 합성만 담당하고, 도메인 로직은 두지 않는다(`architecture.md §7.1`).
 
 ```text
 src/pages/
@@ -82,7 +82,7 @@ export function HomePage() {
 }
 ```
 
-**경계 규칙** (eslint `boundaries/dependencies` 로 강제): `pages` 는 widgets·features·entities·shared 의 **public API(index)**만 import 한다. 다른 `pages` 를 직접 import 하지 않는다(§architecture.md 7.2).
+**경계 규칙** (eslint `boundaries/dependencies` 로 강제): `pages` 는 widgets·features·entities·shared 의 **public API(index)**만 import 한다. 다른 `pages` 를 직접 import 하지 않는다(`architecture.md §7.2`).
 
 ---
 

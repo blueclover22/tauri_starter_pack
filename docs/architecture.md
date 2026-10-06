@@ -236,7 +236,7 @@ src/
 ├── app/                  # 부트스트랩, 라우팅, providers
 │   ├── App.tsx
 │   ├── routes/           # 라우터 도입 시
-│   └── providers/        # provider 도입 시
+│   └── providers/        # providers (뼈대 포함)
 ├── pages/                # 라우트 1:1 컨테이너 (도입 시)
 ├── widgets/              # cross-feature 합성 (도입 시)
 ├── features/             # 도메인 슬라이스 (뼈대: 샘플 1개 — app)
@@ -247,7 +247,7 @@ src/
 │   ├── types/            # ipc.ts (IpcResponse, AppError)
 │   ├── ui/               # primitive UI (도입 시)
 │   └── styles/           # ui.ts (Tailwind 토큰 헬퍼, 도입 시)
-├── test/                 # mocks/, setup.ts (테스트 도입 시)
+├── test/                 # mocks/, setup.ts (뼈대 포함)
 ├── main.tsx
 └── globals.css           # Tailwind v4 @theme 정의
 ```
@@ -259,7 +259,7 @@ src-tauri/
 ├── src/
 │   ├── entities/                      # 도메인 명사 SSOT (뼈대 단계: 비어 있음)
 │   ├── features/                      # 뼈대: 샘플 1개 (app)
-│   │   └── app/                       # {mod, commands, service, model}.rs
+│   │   └── app/                       # {mod, commands, service, model, config}.rs
 │   ├── workflows/                     # cross-feature lifecycle (도입 시)
 │   ├── shared/
 │   │   ├── config.rs                  # 공유 상수 (ERROR_*, EVENT_*)
@@ -415,10 +415,10 @@ src-tauri/
 ### Backend
 
 - `IpcResult<T>` 로 성공/실패를 일관되게 감싼다.
-- 비즈니스 에러를 포함한 모든 결과를 `Ok(IpcResult<T>)` 로 반환한다 (Ok-Only). 시스템 panic 만 `Err(String)`.
+- 비즈니스 에러를 포함한 모든 결과를 `Ok(IpcResult<T>)` 로 반환한다 (Ok-Only, `Err` 미반환 — `tauri-guide.md §8`).
 - error code 는 feature `config.rs` 또는 `shared/config.rs` 상수로 관리한다.
 
-`AppError` code 는 `ERROR_<카테고리>_<상세>` 형식이며 카테고리로 분류한다 (`ERROR_AUTH_*`, `ERROR_NETWORK_*`, `ERROR_VALIDATION_*`, `ERROR_CONFIG_*`, `ERROR_UNKNOWN`, `ERROR_TAURI_*`(invoke wrapper 정규화) 등). 하나의 도메인은 하나의 카테고리만 쓰고, `retryable` 로 UI 재시도 가능 여부를 전달한다. 상세는 `tauri-guide.md §8`.
+`AppError` code 는 `ERROR_<카테고리>_<상세>` 형식이며 카테고리로 분류한다 (`ERROR_AUTH_*`, `ERROR_NETWORK_*`, `ERROR_VALIDATION_*`, `ERROR_CONFIG_*`, `ERROR_IO_*`, `ERROR_UNKNOWN`, `ERROR_TAURI_*`(invoke wrapper 정규화) 등). 카테고리는 도메인이 아니라 에러의 처리 방식으로 고른다 (한 도메인이 여러 카테고리를 쓸 수 있다). `retryable` 로 UI 재시도 가능 여부를 전달한다. 상세는 `tauri-guide.md §8`.
 
 ---
 
@@ -433,7 +433,7 @@ src-tauri/
 | **Type Check**   | TypeScript `tsc --noEmit` | 타입·계약 불일치 탐지    |
 | **Runtime Test** | Vitest / RTL              | 실제 동작·회귀 검증      |
 
-IPC mock 패턴 (`vi.mock("@tauri-apps/api/core")`) 상세는 `docs/optional/server-state.md §4`. 커밋 전 권장 순서: `lint` → `tsc --noEmit` → `test`.
+IPC mock 패턴 (`vi.mock("@tauri-apps/api/core")`) 상세는 `docs/optional/server-state.md §4`. 실행 명령과 순서는 [`.claude/CLAUDE.md` §검증 명령](../.claude/CLAUDE.md#검증-명령) 을 따른다.
 
 ---
 

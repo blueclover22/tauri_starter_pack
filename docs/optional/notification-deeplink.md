@@ -148,7 +148,7 @@ Component → useNotify hook → api
 | single-instance 를 누락/나중에 등록       | 2차 실행 링크 유실·중복 창 → **첫 plugin** 으로 등록       |
 | cold-start 링크를 `onOpenUrl` 로만 처리   | 시작 링크 누락 → `getCurrent()` 병행 (§2.3)                |
 | 권한 확인 없이 `sendNotification` 호출    | 무음 실패 → `isPermissionGranted`/`requestPermission` 흐름 |
-| single-instance 콜백에서 `println!` 로깅  | 규약 위반 → `log::info!` (`coding-rules.md §13`)           |
+| single-instance 콜백에서 `println!` 로깅  | 규약 위반 → `log::info!` (`tauri-guide.md §13`)            |
 | component 에서 알림/딥링크 직접 호출·수신 | 레이어 위반 → feature `api`/hook 경유                      |
 
 ---

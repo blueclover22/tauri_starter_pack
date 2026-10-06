@@ -28,18 +28,7 @@
 
 ### 추가 도입 가이드
 
-| 주제                           | 문서                                     |
-| :----------------------------- | :--------------------------------------- |
-| TanStack Query / Zustand / Zod | `docs/optional/server-state.md`          |
-| Backend HTTP (reqwest)         | `docs/optional/backend-http.md`          |
-| Auth & Secure Store            | `docs/optional/auth.md`                  |
-| SQLite                         | `docs/optional/sqlite.md`                |
-| Event / Channel                | `docs/optional/events-channels.md`       |
-| Command Examples               | `docs/optional/command-examples.md`      |
-| Auto Updater                   | `docs/optional/updater.md`               |
-| Dialog & File System           | `docs/optional/dialog-fs.md`             |
-| Notification & Deep Link       | `docs/optional/notification-deeplink.md` |
-| Desktop UX (트레이·창 상태 등) | `docs/optional/desktop-ux.md`            |
+기능 도입 시 참조할 `docs/optional/*.md` 목록은 [`.claude/CLAUDE.md` §참조 문서](../.claude/CLAUDE.md#참조-문서) 를 따른다.
 
 ---
 
@@ -217,13 +206,14 @@ tauri::Builder::default()
 
 ### Ok-Only 패턴
 
-비즈니스 에러를 포함한 모든 결과를 `Ok(IpcResult<T>)` 로 반환한다. `Err()` 를 반환하면 Tauri 가 JS 의 `Promise.reject` 로 전달하여 비즈니스 실패와 시스템 예외를 구분하기 어렵다.
+비즈니스 에러를 포함한 모든 결과를 `Ok(IpcResult<T>)` 로 반환한다. command 는 `Err` 를 반환하지 않는다 — `Err()` 를 반환하면 Tauri 가 JS 의 `Promise.reject` 로 전달하여 비즈니스 실패와 시스템 예외를 구분하기 어렵다. lock poison 등 인프라 실패도 `Ok(IpcResult::err(...))` 로 반환한다.
 
-| 오류 유형         | Rust 반환                 | TypeScript 처리           |
-| :---------------- | :------------------------ | :------------------------ |
-| **시스템 Panic**  | `Err(String)`             | invoke wrapper 의 `catch` |
-| **비즈니스 에러** | `Ok(IpcResult::err(...))` | `AppError` 로 정규화      |
-| **성공**          | `Ok(IpcResult::ok(...))`  | `data` 반환               |
+| 오류 유형           | Rust 반환                                  | TypeScript 처리                                                                    |
+| :------------------ | :----------------------------------------- | :--------------------------------------------------------------------------------- |
+| **인프라 실패**     | `Ok(IpcResult::err(...))` (lock poison 등) | `AppError` 로 정규화                                                               |
+| **비즈니스 에러**   | `Ok(IpcResult::err(...))`                  | `AppError` 로 정규화                                                               |
+| **성공**            | `Ok(IpcResult::ok(...))`                   | `data` 반환                                                                        |
+| **예상 못한 panic** | (반환 없음)                                | invoke reject 로 전달될 수 있음 → wrapper 가 `ERROR_TAURI_INVOKE_FAILED` 로 정규화 |
 
 ### AppError prefix 분류
 
@@ -235,9 +225,10 @@ tauri::Builder::default()
 | `network`    | `ERROR_NETWORK_*`                     | Timeout/Refused/5xx → `true`, Decode → `false` | 재시도 버튼 + 토스트      |
 | `validation` | `ERROR_VALIDATION_*`                  | `false`                                        | 필드 인라인 에러          |
 | `config`     | `ERROR_CONFIG_*`                      | `false`                                        | 토스트 + 원인 안내        |
+| `io`         | `ERROR_IO_*`                          | `true`                                         | 재시도 토스트 + 원인 안내 |
 | `unknown`    | `ERROR_UNKNOWN` / `ERROR_TAURI_*`     | `true`                                         | 재시도 + 로그 수집        |
 
-규약: ① 모든 code 는 `ERROR_<카테고리>_<상세>` 형식이며, 하나의 도메인은 하나의 카테고리만 쓴다. ② `retryable` 은 UI 재시도 버튼 표시 기준이자 (TanStack Query 도입 시) `retry` 판단 기준. ③ frontend 는 `ERROR_` 다음 카테고리 세그먼트(`<카테고리>`) 로 분기할 수 있어야 한다.
+규약: ① 모든 code 는 `ERROR_<카테고리>_<상세>` 형식이며, 카테고리는 도메인이 아니라 에러의 처리 방식으로 고른다 (한 도메인이 여러 카테고리를 쓸 수 있다). `io` 는 로컬 파일·DB·창 I/O 실패에 쓴다. ② `retryable` 은 UI 재시도 버튼 표시 기준이자 (TanStack Query 도입 시) `retry` 판단 기준. ③ frontend 는 `ERROR_` 다음 카테고리 세그먼트(`<카테고리>`) 로 분기할 수 있어야 한다.
 
 ---
 
@@ -303,7 +294,8 @@ timeout·retry·config 값은 `config.rs` 에 두고, `Cargo.toml` 의 tokio fea
 ```rust
 // lib.rs
 .setup(|app| {
-    lifecycle::run_boot(app).map_err(|e| format!("[{:?}] {}", e.stage, e.message).into())
+    lifecycle::run_boot(app).map_err(|e| format!("[{:?}] {}", e.stage, e.message))?;
+    Ok(())
 })
 ```
 
@@ -321,10 +313,10 @@ Tauri v2 는 capability 기반 권한 관리를 사용한다. 필요한 권한�
 
 뼈대 단계의 기본 권한:
 
-| plugin / 영역   | permission     | 용도            |
-| :-------------- | :------------- | :-------------- |
-| `core`          | `core:default` | Tauri 기본 기능 |
-| `log` (도입 시) | `log:default`  | 로그 출력       |
+| plugin / 영역 | permission     | 용도            |
+| :------------ | :------------- | :-------------- |
+| `core`        | `core:default` | Tauri 기본 기능 |
+| `log`         | `log:default`  | 로그 출력       |
 
 도입 시 추가되는 권한 예시 (각 가이드는 `docs/optional/` 참조):
 

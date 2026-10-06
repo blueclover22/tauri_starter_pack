@@ -34,7 +34,7 @@ command 하나를 추가할 때는 **타입 계약을 먼저 정의**하고 양�
 | :----------------------------- | :------------------ | :---------------------------------------------------------- |
 | `lib.rs` (`generate_handler!`) | `app_ping` 만 등록  | 새 command 함수를 handler 목록에 추가                       |
 | feature 폴더                   | `app` 샘플          | `features/<f>/{commands,service,(api),(config),(model)}.rs` |
-| `config.rs`                    | `ERROR_*`           | `ERROR_<도메인>_*` 상수 (한 도메인=한 카테고리)             |
+| `config.rs`                    | `ERROR_*`           | `ERROR_<카테고리>_<상세>` 상수 (카테고리는 처리 방식 기준)  |
 | 타입 동기                      | `ipc.rs` / `ipc.ts` | `model.rs` ↔ TS 타입 1:1 유지                               |
 | 본 문서 / `tauri-commands.md`  | 카탈로그            | 계약이 바뀌면 **먼저** 갱신                                 |
 
@@ -42,10 +42,12 @@ command 하나를 추가할 때는 **타입 계약을 먼저 정의**하고 양�
 
 ## 3. Shared (공통 설정)
 
-| Command       | Input        | Output           | Error codes                                            | Retryable |
-| ------------- | ------------ | ---------------- | ------------------------------------------------------ | --------- |
-| `config_load` | -            | `UserConfig`     | `ERROR_CONFIG_LOCK_FAILED`                             | false     |
-| `config_save` | `UserConfig` | `SuccessPayload` | `ERROR_CONFIG_LOCK_FAILED`, `ERROR_CONFIG_SAVE_FAILED` | true      |
+| Command       | Input        | Output           | Error codes                                               | Retryable |
+| ------------- | ------------ | ---------------- | --------------------------------------------------------- | --------- |
+| `config_load` | -            | `UserConfig`     | `ERROR_CONFIG_LOCK_FAILED`                                | false     |
+| `config_save` | `UserConfig` | `SuccessPayload` | `ERROR_CONFIG_LOCK_FAILED`, `ERROR_IO_CONFIG_SAVE_FAILED` | true\*    |
+
+> \* `config_save` 는 lock 실패(`ERROR_CONFIG_LOCK_FAILED`, config 카테고리)가 `retryable=false`, 저장 I/O 실패(`ERROR_IO_CONFIG_SAVE_FAILED`, io 카테고리)가 `retryable=true` 다. 표의 값은 error 코드 기준으로 해석한다.
 
 ---
 
@@ -65,13 +67,13 @@ command 하나를 추가할 때는 **타입 계약을 먼저 정의**하고 양�
 > 앱 도메인에 따라 `notes`, `documents`, `bookmarks`, `tasks` 등으로 치환.
 > SQLite 사용 시 `docs/optional/sqlite.md` 함께 참조.
 
-| Command        | Input               | Output           | Error codes                 | Retryable |
-| -------------- | ------------------- | ---------------- | --------------------------- | --------- |
-| `notes_list`   | `NoteListRequest`   | `NoteItem[]`     | `ERROR_NOTES_LIST_FAILED`   | true      |
-| `notes_get`    | `{ id: string }`    | `NoteDetail`     | `ERROR_NOTE_NOT_FOUND`      | false     |
-| `notes_create` | `CreateNoteRequest` | `NoteItem`       | `ERROR_NOTES_CREATE_FAILED` | true      |
-| `notes_update` | `UpdateNoteRequest` | `NoteItem`       | `ERROR_NOTES_UPDATE_FAILED` | true      |
-| `notes_delete` | `{ id: string }`    | `SuccessPayload` | `ERROR_NOTE_NOT_FOUND`      | false     |
+| Command        | Input               | Output           | Error codes                       | Retryable |
+| -------------- | ------------------- | ---------------- | --------------------------------- | --------- |
+| `notes_list`   | `NoteListRequest`   | `NoteItem[]`     | `ERROR_IO_NOTES_LIST_FAILED`      | true      |
+| `notes_get`    | `{ id: string }`    | `NoteDetail`     | `ERROR_VALIDATION_NOTE_NOT_FOUND` | false     |
+| `notes_create` | `CreateNoteRequest` | `NoteItem`       | `ERROR_IO_NOTES_CREATE_FAILED`    | true      |
+| `notes_update` | `UpdateNoteRequest` | `NoteItem`       | `ERROR_IO_NOTES_UPDATE_FAILED`    | true      |
+| `notes_delete` | `{ id: string }`    | `SuccessPayload` | `ERROR_VALIDATION_NOTE_NOT_FOUND` | false     |
 
 ---
 
@@ -79,34 +81,34 @@ command 하나를 추가할 때는 **타입 계약을 먼저 정의**하고 양�
 
 > 파일을 다루지 않는 앱은 채택하지 않는다.
 
-| Command         | Input              | Output           | Error codes             | Retryable |
-| --------------- | ------------------ | ---------------- | ----------------------- | --------- |
-| `fs_read_file`  | `{ path: string }` | `FileContent`    | `ERROR_FS_READ_FAILED`  | true      |
-| `fs_write_file` | `WriteFileRequest` | `SuccessPayload` | `ERROR_FS_WRITE_FAILED` | true      |
-| `fs_list_dir`   | `{ path: string }` | `FileEntry[]`    | `ERROR_FS_LIST_FAILED`  | true      |
+| Command         | Input              | Output           | Error codes                | Retryable |
+| --------------- | ------------------ | ---------------- | -------------------------- | --------- |
+| `fs_read_file`  | `{ path: string }` | `FileContent`    | `ERROR_IO_FS_READ_FAILED`  | true      |
+| `fs_write_file` | `WriteFileRequest` | `SuccessPayload` | `ERROR_IO_FS_WRITE_FAILED` | true      |
+| `fs_list_dir`   | `{ path: string }` | `FileEntry[]`    | `ERROR_IO_FS_LIST_FAILED`  | true      |
 
 ---
 
 ## 7. System (시스템 연동)
 
-| Command          | Input | Output           | Error codes                   | Retryable |
-| ---------------- | ----- | ---------------- | ----------------------------- | --------- |
-| `window_restore` | -     | `SuccessPayload` | `ERROR_WINDOW_RESTORE_FAILED` | false     |
-| `updater_check`  | -     | `UpdateInfo`     | `ERROR_UPDATER_CHECK_FAILED`  | true      |
+| Command          | Input | Output           | Error codes                          | Retryable |
+| ---------------- | ----- | ---------------- | ------------------------------------ | --------- |
+| `window_restore` | -     | `SuccessPayload` | `ERROR_IO_WINDOW_RESTORE_FAILED`     | true      |
+| `updater_check`  | -     | `UpdateInfo`     | `ERROR_NETWORK_UPDATER_CHECK_FAILED` | true      |
 
 ---
 
 ## 8. 공통 에러 케이스 (도입 시 참조)
 
-| 유형             | 조건                                             | 응답                                                                                     |
-| ---------------- | ------------------------------------------------ | ---------------------------------------------------------------------------------------- |
-| Config 잠금 실패 | mutex lock 실패                                  | `{ success: false, error: { code: "ERROR_CONFIG_LOCK_FAILED", retryable: false, ... } }` |
-| Config 저장 실패 | 파일 write 실패                                  | `{ success: false, error: { code: "ERROR_CONFIG_SAVE_FAILED", retryable: true, ... } }`  |
-| 인증 실패        | 로그인 요청 실패 (인증이 있는 앱만)              | `{ success: false, error: { code: "ERROR_AUTH_LOGIN_FAILED", retryable: false, ... } }`  |
-| 리소스 없음      | 존재하지 않는 ID 조회 (노트/문서 등)             | `{ success: false, error: { code: "ERROR_NOTE_NOT_FOUND", retryable: false, ... } }`     |
-| 파일 I/O 실패    | 파일 읽기/쓰기 실패                              | `{ success: false, error: { code: "ERROR_FS_READ_FAILED", retryable: true, ... } }`      |
-| 외부 API 실패    | HTTP 요청 실패 (`docs/optional/backend-http.md`) | `{ success: false, error: { code: "ERROR_NETWORK_*", retryable: ..., ... } }`            |
-| IPC invoke 실패  | Tauri IPC 호출 자체 실패                         | invoke wrapper `catch` 경로 — `AppError` 로 정규화                                       |
+| 유형             | 조건                                             | 응답                                                                                            |
+| ---------------- | ------------------------------------------------ | ----------------------------------------------------------------------------------------------- |
+| Config 잠금 실패 | mutex lock 실패                                  | `{ success: false, error: { code: "ERROR_CONFIG_LOCK_FAILED", retryable: false, ... } }`        |
+| Config 저장 실패 | 파일 write 실패                                  | `{ success: false, error: { code: "ERROR_IO_CONFIG_SAVE_FAILED", retryable: true, ... } }`      |
+| 인증 실패        | 로그인 요청 실패 (인증이 있는 앱만)              | `{ success: false, error: { code: "ERROR_AUTH_LOGIN_FAILED", retryable: false, ... } }`         |
+| 리소스 없음      | 존재하지 않는 ID 조회 (노트/문서 등)             | `{ success: false, error: { code: "ERROR_VALIDATION_NOTE_NOT_FOUND", retryable: false, ... } }` |
+| 파일 I/O 실패    | 파일 읽기/쓰기 실패                              | `{ success: false, error: { code: "ERROR_IO_FS_READ_FAILED", retryable: true, ... } }`          |
+| 외부 API 실패    | HTTP 요청 실패 (`docs/optional/backend-http.md`) | `{ success: false, error: { code: "ERROR_NETWORK_*", retryable: ..., ... } }`                   |
+| IPC invoke 실패  | Tauri IPC 호출 자체 실패                         | invoke wrapper `catch` 경로 — `AppError` 로 정규화                                              |
 
 ---
 

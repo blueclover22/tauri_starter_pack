@@ -18,7 +18,7 @@
 - 공용 타입 정의는 `src/shared/types/ipc.ts` 와 `src-tauri/src/shared/types/ipc.rs` 를 SSOT 로 한다.
 - command 이름은 `[feature]_[action]` 형식 (예: `auth_login`, `notes_create`, `app_ping`).
 - command 별 error code 는 feature `config.rs` 에 `ERROR_<카테고리>_<상세>` 형식 상수로 관리한다.
-- 비즈니스 에러를 포함한 모든 결과는 `Ok(IpcResult<T>)` 로 감싼다 (Ok-Only). 시스템 panic 만 `Err(String)` (`tauri-guide.md §8`).
+- 비즈니스 에러를 포함한 모든 결과는 `Ok(IpcResult<T>)` 로 감싼다 (Ok-Only, `Err` 미반환 — `tauri-guide.md §8`).
 
 ---
 
@@ -66,11 +66,12 @@ pub async fn app_ping(request: PingRequest) -> Result<IpcResult<PingInfo>, Strin
 
 > 본 표는 도메인 command 도입 시점에 필요한 케이스만 채택한다. 도메인 예시는 `docs/optional/command-examples.md`.
 
-| 유형            | 조건                           | 응답 (요약)                                                         |
-| --------------- | ------------------------------ | ------------------------------------------------------------------- |
-| IPC invoke 실패 | Tauri IPC 호출 자체 실패       | invoke wrapper `catch` 경로 — `ERROR_TAURI_INVOKE_FAILED` 로 정규화 |
-| 비즈니스 에러   | service 내부 도메인 로직 실패  | `IpcResult::err(code, message, retryable)` (Ok-Only)                |
-| 시스템 Panic    | unwrap / 데드락 등 시스템 예외 | `Err(String)` — invoke wrapper 의 `catch` 경로                      |
+| 유형            | 조건                          | 응답 (요약)                                                         |
+| --------------- | ----------------------------- | ------------------------------------------------------------------- |
+| IPC invoke 실패 | Tauri IPC 호출 자체 실패      | invoke wrapper `catch` 경로 — `ERROR_TAURI_INVOKE_FAILED` 로 정규화 |
+| 비즈니스 에러   | service 내부 도메인 로직 실패 | `IpcResult::err(code, message, retryable)` (Ok-Only)                |
+| 인프라 실패     | lock poison 등 시스템 예외    | `IpcResult::err(code, message, retryable)` (Ok-Only)                |
+| 예상 못한 panic | unwrap / 데드락 등            | invoke reject 가능 — `ERROR_TAURI_INVOKE_FAILED` 로 정규화          |
 
 ---
 

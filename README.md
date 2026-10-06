@@ -188,11 +188,4 @@ pnpm tauri ios build
 
 ## 검증 명령
 
-| 단계            | 명령                |
-| :-------------- | :------------------ |
-| 타입 체크       | `pnpm typecheck`    |
-| 린트            | `pnpm lint`         |
-| 테스트          | `pnpm test`         |
-| 빌드 (frontend) | `pnpm build`        |
-| 빌드 (desktop)  | `pnpm tauri build`  |
-| 포맷 검증       | `pnpm format:check` |
+검증 명령은 [`.claude/CLAUDE.md`](./.claude/CLAUDE.md#검증-명령) 의 §검증 명령 을 따른다.

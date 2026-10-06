@@ -30,11 +30,7 @@
 
 ### 추가 도입 가이드
 
-| 주제                           | 문서                            |
-| :----------------------------- | :------------------------------ |
-| TanStack Query / Zustand / Zod | `docs/optional/server-state.md` |
-| 인증 세션 / Secure Store       | `docs/optional/auth.md`         |
-| Backend HTTP                   | `docs/optional/backend-http.md` |
+기능 도입 시 참조할 `docs/optional/*.md` 목록은 [`.claude/CLAUDE.md` §참조 문서](../.claude/CLAUDE.md#참조-문서) 를 따른다.
 
 ---
 
@@ -134,7 +130,7 @@ TanStack Query 도입 시 layer 가 `Component → Hook → Query/Mutation → A
 ## 10. Tauri / Rust Rules
 
 - component 에서 `invoke` 를 직접 호출하지 않는다.
-- command 는 `Result<IpcResult<T>, String>` 를 반환하고, 비즈니스 에러를 포함한 모든 결과를 `Ok(IpcResult<T>)` 로 반환한다.
+- command 는 `Result<IpcResult<T>, String>` 를 반환하되 `Err` 는 반환하지 않는다 (Ok-Only, `tauri-guide.md §8`).
 - command 는 얇게 유지하고 service 가 비즈니스 로직을 담당한다.
 - 입력/출력은 typed model struct 로 정의한다. primitive 파라미터 나열보다 request model struct 를 우선한다.
 - error code 는 feature `config.rs` 또는 `shared/config.rs` 상수로 두고 `ERROR_` 접두사 + UPPER_SNAKE_CASE 로 명명한다.
@@ -194,7 +190,7 @@ TanStack Query 도입 시 layer 가 `Component → Hook → Query/Mutation → A
 
 IPC mock 패턴 (vi.mock, mock helper 구성, hook 테스트 등) 상세는 `docs/optional/server-state.md §4`.
 
-커밋 전 권장 순서: `pnpm lint` → `pnpm typecheck` → `pnpm test`.
+실행 명령은 [`.claude/CLAUDE.md` §검증 명령](../.claude/CLAUDE.md#검증-명령) 을 따른다.
 
 ---
 

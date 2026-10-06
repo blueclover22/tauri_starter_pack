@@ -160,14 +160,14 @@ TanStack Query / Zustand 를 도입하면 hook 테스트가 필요해진다. IPC
 
 순수 frontend 도입이므로 Rust 측(`AppState`/`BootStage`/`capabilities`)은 건드리지 않는다.
 
-| 접점                                     | 뼈대 현재 상태   | 도입 시 변경                                               |
-| :--------------------------------------- | :--------------- | :--------------------------------------------------------- |
-| `app/providers/`                         | (도입 시 생성)   | `QueryClientProvider` 주입 (Query 도입 시)                 |
-| `shared/lib/queryClient.ts`              | 없음             | 단일 `QueryClient` 인스턴스                                |
-| feature `model/`                         | `use*.ts` hook   | `queries/`·`mutations/`·`store/`·`schema.ts` (필요 부분만) |
-| store 위치                               | 없음             | 전역 `shared/store/`, 도메인 한정 `feature/model/store/`   |
-| `test/mocks/tauri.ts`                    | (테스트 도입 시) | invoke mock helper                                         |
-| Rust(`capabilities`/`AppState`/`lib.rs`) | —                | **변경 없음** (frontend 전용)                              |
+| 접점                                     | 뼈대 현재 상태 | 도입 시 변경                                               |
+| :--------------------------------------- | :------------- | :--------------------------------------------------------- |
+| `app/providers/`                         | (뼈대 포함)    | `QueryClientProvider` 주입 (Query 도입 시)                 |
+| `shared/lib/queryClient.ts`              | 없음           | 단일 `QueryClient` 인스턴스                                |
+| feature `model/`                         | `use*.ts` hook | `queries/`·`mutations/`·`store/`·`schema.ts` (필요 부분만) |
+| store 위치                               | 없음           | 전역 `shared/store/`, 도메인 한정 `feature/model/store/`   |
+| `test/mocks/tauri.ts`                    | (뼈대 포함)    | invoke mock helper                                         |
+| Rust(`capabilities`/`AppState`/`lib.rs`) | —              | **변경 없음** (frontend 전용)                              |
 
 ---
 
@@ -192,5 +192,5 @@ TanStack Query / Zustand 를 도입하면 hook 테스트가 필요해진다. IPC
 | 1   | `pnpm add @tanstack/react-query` / `zustand` / `zod` 중 도입 대상만 설치                                       | □    |
 | 2   | `src/shared/lib/queryClient.ts` 생성, `app/providers/` 에서 `QueryClientProvider` 주입 (Query 도입 시)         | □    |
 | 3   | feature 의 `model/queries/`, `model/mutations/`, `model/store/`, `model/schema.ts` 디렉토리 생성 (필요 부분만) | □    |
-| 4   | `src/test/mocks/tauri.ts` 추가, `src/test/setup.ts` 에서 import (Query/Mutation 테스트 필요 시)                | □    |
+| 4   | Query/Mutation 테스트에서 `src/test/mocks/tauri.ts`(뼈대 포함) 의 `mockInvoke` 재사용                          | □    |
 | 5   | `architecture.md §10 State Management` 의 매트릭스와 본 문서가 일치하는지 확인                                 | □    |
