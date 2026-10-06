@@ -187,6 +187,7 @@ TanStack Query 도입 시 layer 가 `Component → Hook → Query/Mutation → A
 - 검증은 lint, format, type check, runtime test 를 분리해서 운영한다. 한 단계가 통과해도 다른 단계를 생략하지 않는다.
 - Renderer parser 계층은 IPC 응답 해석, 에러 정규화, fallback 메시지를 테스트한다.
 - 브리지 객체는 mock helper 로 대체한다.
+- 테스트 파일도 FSD 경계 규칙을 따른다 (다른 slice 는 public API 로만). `src/test/*`(mock·setup) import 는 테스트 파일에서만 허용된다 (ESLint `boundaries/dependencies` 강제).
 
 IPC mock 패턴 (vi.mock, mock helper 구성, hook 테스트 등) 상세는 `docs/optional/server-state.md §4`.
 
