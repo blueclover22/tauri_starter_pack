@@ -433,7 +433,7 @@ src-tauri/
 | **Type Check**   | TypeScript `tsc --noEmit` | 타입·계약 불일치 탐지    |
 | **Runtime Test** | Vitest / RTL              | 실제 동작·회귀 검증      |
 
-IPC mock 패턴 (`vi.mock("@tauri-apps/api/core")`) 상세는 `docs/optional/server-state.md §4`. 실행 명령과 순서는 [`.claude/CLAUDE.md` §검증 명령](../.claude/CLAUDE.md#검증-명령) 을 따른다.
+IPC mock 패턴 (`vi.mock("@tauri-apps/api/core")`) 상세는 `docs/optional/server-state.md §4`. 실행 명령과 순서는 [`AGENTS.md` §검증 명령](../AGENTS.md#검증-명령) 을 따른다.
 
 ---
 

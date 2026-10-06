@@ -16,34 +16,34 @@ Tauri v2 + React + TypeScript + Tailwind v4 기반 데스크톱·모바일 앱 �
    - `src-tauri/Cargo.toml` — `[package].name` (단, `[lib].name = "app_lib"` 는 `main.rs` 가 참조하므로 유지)
 4. 만들려는 내용을 `.claude/design/init.md` 에 자유롭게 작성한다 (작성 예시: `.claude/design/example/ex_init.md`).
 5. 구현이 참고할 자료(이미지·API 명세·기존 코드 일부 등)가 있으면 `.claude/reference/` 하위에 둔다.
-6. AI 에이전트에게 "구현 시작" 을 지시하면 `.claude/CLAUDE.md` 의 구동 순서에 따라 설계서 작성 → 구현이 진행된다.
+6. AI 에이전트에게 "구현 시작" 을 지시하면 `AGENTS.md` 의 구동 순서에 따라 설계서 작성 → 구현이 진행된다.
 
-> **참고** — 이 스타터의 규칙(`docs/`·`.claude/CLAUDE.md`)은 **초기 구현에 맞춰** 설정되어 있다. 유지보수 단계로 넘어가면 프로젝트 상황에 맞게 규칙을 검토·수정해 사용한다.
+> **참고** — 이 스타터의 규칙(`docs/`·`AGENTS.md`)은 **초기 구현에 맞춰** 설정되어 있다. 유지보수 단계로 넘어가면 프로젝트 상황에 맞게 규칙을 검토·수정해 사용한다.
 
 ---
 
 ## 문서 구조
 
-| 경로                                     | 내용                                                       |
-| :--------------------------------------- | :--------------------------------------------------------- |
-| `docs/architecture.md`                   | 폴더 구조·도메인 슬라이스·공용 contract                    |
-| `docs/tauri-guide.md`                    | IPC wrapper·command 설계·Ok-Only·capability·logging·모바일 |
-| `docs/tauri-commands.md`                 | command 계약 공통 규칙 + 샘플                              |
-| `docs/coding-rules.md`                   | 코드 작성 규칙                                             |
-| `docs/optional/server-state.md`          | (도입 시) TanStack Query / Zustand / Zod                   |
-| `docs/optional/backend-http.md`          | (도입 시) reqwest HttpClient                               |
-| `docs/optional/auth.md`                  | (도입 시) 인증·secure store                                |
-| `docs/optional/sqlite.md`                | (도입 시) SQLite 로컬 DB                                   |
-| `docs/optional/events-channels.md`       | (도입 시) emit/listen, Channel<T>                          |
-| `docs/optional/command-examples.md`      | (도입 시) 도메인 command 예시 모음                         |
-| `docs/optional/updater.md`               | (도입 시) 자동 업데이트 (데스크톱)                         |
-| `docs/optional/dialog-fs.md`             | (도입 시) 파일 다이얼로그·파일 접근                        |
-| `docs/optional/notification-deeplink.md` | (도입 시) 알림·딥링크                                      |
-| `docs/optional/desktop-ux.md`            | (도입 시) 트레이·창 상태·단일 인스턴스·opener              |
-| `docs/optional/react-compiler.md`        | (기본 활성) React Compiler 동작·예외·비활성                |
-| `docs/optional/routing.md`               | (도입 시) 화면 라우팅·pages layer                          |
-| `.claude/CLAUDE.md`                      | AI 에이전트 작업 규칙 (구동 순서, 참조 문서)               |
-| `AGENTS.md`                              | 외부 AI 에이전트 진입점 (CLAUDE.md 를 SSOT 로 가리킴)      |
+| 경로                                     | 내용                                                           |
+| :--------------------------------------- | :------------------------------------------------------------- |
+| `docs/architecture.md`                   | 폴더 구조·도메인 슬라이스·공용 contract                        |
+| `docs/tauri-guide.md`                    | IPC wrapper·command 설계·Ok-Only·capability·logging·모바일     |
+| `docs/tauri-commands.md`                 | command 계약 공통 규칙 + 샘플                                  |
+| `docs/coding-rules.md`                   | 코드 작성 규칙                                                 |
+| `docs/optional/server-state.md`          | (도입 시) TanStack Query / Zustand / Zod                       |
+| `docs/optional/backend-http.md`          | (도입 시) reqwest HttpClient                                   |
+| `docs/optional/auth.md`                  | (도입 시) 인증·secure store                                    |
+| `docs/optional/sqlite.md`                | (도입 시) SQLite 로컬 DB                                       |
+| `docs/optional/events-channels.md`       | (도입 시) emit/listen, Channel<T>                              |
+| `docs/optional/command-examples.md`      | (도입 시) 도메인 command 예시 모음                             |
+| `docs/optional/updater.md`               | (도입 시) 자동 업데이트 (데스크톱)                             |
+| `docs/optional/dialog-fs.md`             | (도입 시) 파일 다이얼로그·파일 접근                            |
+| `docs/optional/notification-deeplink.md` | (도입 시) 알림·딥링크                                          |
+| `docs/optional/desktop-ux.md`            | (도입 시) 트레이·창 상태·단일 인스턴스·opener                  |
+| `docs/optional/react-compiler.md`        | (기본 활성) React Compiler 동작·예외·비활성                    |
+| `docs/optional/routing.md`               | (도입 시) 화면 라우팅·pages layer                              |
+| `AGENTS.md`                              | AI 에이전트 작업 규칙 SSOT (구동 순서, 참조 문서, 검증 명령)   |
+| `.claude/CLAUDE.md`                      | Claude Code 진입점 (`@../AGENTS.md` import + Claude 전용 사항) |
 
 ---
 
@@ -188,4 +188,4 @@ pnpm tauri ios build
 
 ## 검증 명령
 
-검증 명령은 [`.claude/CLAUDE.md`](./.claude/CLAUDE.md#검증-명령) 의 §검증 명령 을 따른다.
+검증 명령은 [`AGENTS.md`](./AGENTS.md#검증-명령) 의 §검증 명령 을 따른다.

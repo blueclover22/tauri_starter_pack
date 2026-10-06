@@ -10,4 +10,4 @@
 `.claude/design/init.md` 또는 설계서에서 본 디렉토리의 파일을 경로로 참조한다.
 예) `.claude/reference/api-spec.yaml`
 
-> 자료는 사용자가 이 디렉토리에 올린다. AI 는 `.claude/CLAUDE.md` 구동 순서의 1단계(요구사항 확인)에서 이 자료를 함께 확인한다.
+> 자료는 사용자가 이 디렉토리에 올린다. AI 는 `AGENTS.md` 구동 순서의 1단계(요구사항 확인)에서 이 자료를 함께 확인한다.

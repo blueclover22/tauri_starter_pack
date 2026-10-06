@@ -28,7 +28,7 @@
 
 ### 추가 도입 가이드
 
-기능 도입 시 참조할 `docs/optional/*.md` 목록은 [`.claude/CLAUDE.md` §참조 문서](../.claude/CLAUDE.md#참조-문서) 를 따른다.
+기능 도입 시 참조할 `docs/optional/*.md` 목록은 [`AGENTS.md` §참조 문서](../AGENTS.md#참조-문서) 를 따른다.
 
 ---
 

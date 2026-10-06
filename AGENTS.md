@@ -1,18 +1,91 @@
 # AGENTS.md
 
-> 본 프로젝트의 작업 규칙 SSOT (Single Source of Truth) 는 **`.claude/CLAUDE.md`** 다.
-> 이 문서는 외부 코딩 에이전트(Codex, Cursor, Aider 등) 를 위한 **얇은 진입점**이며, 자체 규칙을 정의하지 않는다.
-> 본 문서와 `.claude/CLAUDE.md` 가 다르면 **언제나 `.claude/CLAUDE.md` 를 우선** 따른다.
+> 본 문서는 이 프로젝트에서 작업하는 모든 AI 코딩 에이전트(Claude Code, Codex, Cursor, Copilot, Gemini 등)의 **작업 규칙 SSOT (Single Source of Truth)** 다.
+> Claude Code 는 `.claude/CLAUDE.md` 의 `@../AGENTS.md` import 로 본 문서를 읽는다.
 >
-> **강제 범위 주의**: `.claude/settings.json`(verify 명령 allow 등) 과 전역 `~/.claude/settings.json`(비밀파일 read-deny) 은 **Claude Code 에서만** 작동한다. 외부 에이전트(Codex / Cursor / Aider 등) 는 그 강제를 받지 않으므로, 셸 정책·승인 게이트 등은 **본 문서와 `.claude/CLAUDE.md` 의 prose 가 SSOT** 다.
+> **강제 범위 주의**: `.claude/settings.json`(검증 명령 allow 등) 과 전역 `~/.claude/settings.json`(비밀파일 read-deny) 은 **Claude Code 에서만** 작동한다. 다른 에이전트는 그 강제를 받지 않으므로, 셸 정책·승인 게이트 등은 **본 문서의 prose 가 SSOT** 다.
 
-## 작업 시작 전 필독
+## 구동 순서
 
-다음 순서로 읽고 작업을 시작한다.
+### 1단계 — 요구사항 확인 (`.claude/design/init.md`)
 
-1. `.claude/CLAUDE.md` — 구동 순서, 코딩 원칙 요약, 참조 문서 인덱스, 검증 명령
-2. `README.md` — 빌드·실행·환경 설정
-3. `docs/architecture.md`, `docs/tauri-guide.md`, `docs/tauri-commands.md`, `docs/coding-rules.md` — 뼈대 기준
-4. `docs/optional/*.md` — 기능 추가 시점에 해당 항목만
+1. 구현에 앞서 `.claude/design/init.md` 를 먼저 확인한다.
+2. 내용이 비어 있으면(HTML 주석 외 본문이 없으면) 사용자에게 작성을 요청한다 (작성 예시: `.claude/design/example/ex_init.md`).
+3. 사용자가 `.claude/reference/` 에 올린 참고 자료(이미지·명세·기존 코드 등)가 있으면 함께 확인한다.
+4. 내용이 불명확하면 사용자에게 재질문하여 모호함을 해소한 뒤 진행한다.
 
-상세 코딩 원칙·검증 명령은 모두 `.claude/CLAUDE.md` 에 있으며 본 문서는 중복으로 옮겨 적지 않는다.
+### 2단계 — 설계
+
+5. 요구사항이 모두 명확해지면 구현을 위한 설계를 진행한다.
+6. 설계서는 `.claude/design/<YYYYMMDD>-<slug>.md` 로 작성하며(이 경로 규정이 전역 도구 기본값보다 우선한다), 양식은 `.claude/design/example/ex_plan.md` 를 따른다.
+7. 작성한 설계서는 사용자 승인을 받는다. 승인 전에는 구현에 착수하지 않는다. 상태값은 `설계안` → `승인 (YYYY-MM-DD)` → `구현중` → `완료` 이며, 승인 시 설계서의 상태 줄을 갱신해 기록한다 (`ex_plan.md` 의 상태 규정과 동일).
+
+### 3단계 — 구현
+
+8. `.claude/design/` 의 설계서와 **`docs/` 하위에 정의된 구조·규칙**을 함께 기반으로 구현한다. 설계서와 `docs/` 가 충돌하면 사용자에게 확인한다.
+   - **구조**: `docs/architecture.md` — FSD 레이어·세그먼트·폴더 트리·Feature Template·계층 import 경계.
+   - **규칙**: `docs/coding-rules.md` — 명명·import path·에러 처리·테스트. Tauri 메커니즘은 `docs/tauri-guide.md`, command 계약은 `docs/tauri-commands.md`.
+   - 새 도메인/파일은 기존 동종 구조(예: `features/app`)를 먼저 참조해 동일 패턴을 따르고, 이탈이 필요하면 사유를 남긴다.
+   - 도입형 기능(상태관리·HTTP·인증·DB·업데이터·파일·알림/딥링크·데스크톱 UX 등)은 해당 `docs/optional/*.md` 가이드를 함께 따른다.
+
+### 4단계 — 검토·보고
+
+9. 구현을 마치면 전체를 검토한 뒤 사용자에게 경과를 보고한다.
+
+## 코딩 원칙 (요약)
+
+- **코딩 전에 생각한다** — 확인되지 않은 사실은 "추정" 으로 명시하고, 해석이 여러 갈래면 모두 나열한 뒤 질문한다. 더 단순한 대안이 있으면 먼저 제안한다.
+- **단순함을 최우선으로 한다** — 요청하지 않은 기능, 일회용 코드의 추상화, 추측성 유연성, 일어날 수 없는 시나리오의 예외 처리를 더하지 않는다.
+- **정밀하게 수정한다** — 한 번의 변경은 하나의 목적만 담는다. 요청 범위 밖의 파일·인접 코드·서식을 임의로 고치지 않으며, 정리는 본인 변경으로 생긴 미사용 코드에 한한다.
+- **목표 중심으로 실행한다** — 작업을 검증 가능한 목표로 바꾼 뒤 착수하고, 변경 후 빌드·타입체크·린트·테스트로 검증한다.
+
+상세 코딩·아키텍처 규칙은 `docs/` 하위 문서를 참조한다.
+
+## 참조 문서
+
+뼈대(기본) 단계에서 반드시 따른다.
+
+| #   | 문서                                             | 내용                                                |
+| :-- | :----------------------------------------------- | :-------------------------------------------------- |
+| 1   | [docs/architecture.md](docs/architecture.md)     | 폴더 구조·도메인 슬라이스·공용 contract             |
+| 2   | [docs/tauri-guide.md](docs/tauri-guide.md)       | IPC wrapper·command 설계·Ok-Only·capability·logging |
+| 3   | [docs/tauri-commands.md](docs/tauri-commands.md) | command 계약 공통 규칙                              |
+| 4   | [docs/coding-rules.md](docs/coding-rules.md)     | 코드 작성 규칙                                      |
+
+기능 추가 시 필요한 것만 참조한다.
+
+| #   | 문서                                                                             | 도입 시점                                           |
+| :-- | :------------------------------------------------------------------------------- | :-------------------------------------------------- |
+| 1   | [docs/optional/server-state.md](docs/optional/server-state.md)                   | TanStack Query / Zustand / Zod 도입 시              |
+| 2   | [docs/optional/backend-http.md](docs/optional/backend-http.md)                   | reqwest HTTP client 도입 시                         |
+| 3   | [docs/optional/auth.md](docs/optional/auth.md)                                   | 인증·secure store 도입 시                           |
+| 4   | [docs/optional/sqlite.md](docs/optional/sqlite.md)                               | SQLite 로컬 DB 도입 시                              |
+| 5   | [docs/optional/events-channels.md](docs/optional/events-channels.md)             | emit/listen 또는 Channel<T> 도입 시                 |
+| 6   | [docs/optional/command-examples.md](docs/optional/command-examples.md)           | 도메인 command 추가 시                              |
+| 7   | [docs/optional/updater.md](docs/optional/updater.md)                             | 자동 업데이트 도입 시 (데스크톱)                    |
+| 8   | [docs/optional/dialog-fs.md](docs/optional/dialog-fs.md)                         | 파일 다이얼로그·파일 접근 도입 시                   |
+| 9   | [docs/optional/notification-deeplink.md](docs/optional/notification-deeplink.md) | 알림·딥링크 도입 시                                 |
+| 10  | [docs/optional/desktop-ux.md](docs/optional/desktop-ux.md)                       | 트레이·창 상태·단일 인스턴스·opener 도입 시         |
+| 11  | [docs/optional/react-compiler.md](docs/optional/react-compiler.md)               | React Compiler 동작 이해·예외·비활성 시 (기본 활성) |
+| 12  | [docs/optional/routing.md](docs/optional/routing.md)                             | 화면 2개 이상(라우팅·pages layer) 도입 시           |
+
+## 검증 명령
+
+| 단계             | 명령                                                                             |
+| :--------------- | :------------------------------------------------------------------------------- |
+| 타입 체크        | `pnpm typecheck`                                                                 |
+| 린트             | `pnpm lint`                                                                      |
+| 테스트           | `pnpm test`                                                                      |
+| 빌드 (frontend)  | `pnpm build`                                                                     |
+| 빌드 (desktop)   | `pnpm tauri build`                                                               |
+| 포맷 (검증)      | `pnpm format:check`                                                              |
+| Rust 포맷 (검증) | `cargo fmt --manifest-path src-tauri/Cargo.toml --check`                         |
+| Rust 린트        | `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` |
+| Rust 테스트      | `cargo test --manifest-path src-tauri/Cargo.toml`                                |
+
+## 스타터 팩 유지보수 전용 파일
+
+이 저장소는 신규 Tauri 프로젝트의 기반이다. `.github/`(CI 워크플로·Dependabot 설정)는 **스타터 팩 저장소 유지보수 전용**이며 뼈대 규칙·검증 명령의 일부가 아니다.
+
+- 신규 프로젝트는 `.github/` 를 제거한 상태(CI·Dependabot 없음)로 시작한다 (`README.md` "사용 방법" 2단계).
+- 신규 프로젝트에서 `.github/` 가 없다는 이유로 CI·Dependabot 을 임의로 추가하지 않는다. 필요하면 사용자 요청에 따라 프로젝트에 맞게 새로 구성한다.

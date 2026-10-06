@@ -30,7 +30,7 @@
 
 ### 추가 도입 가이드
 
-기능 도입 시 참조할 `docs/optional/*.md` 목록은 [`.claude/CLAUDE.md` §참조 문서](../.claude/CLAUDE.md#참조-문서) 를 따른다.
+기능 도입 시 참조할 `docs/optional/*.md` 목록은 [`AGENTS.md` §참조 문서](../AGENTS.md#참조-문서) 를 따른다.
 
 ---
 
@@ -190,7 +190,7 @@ TanStack Query 도입 시 layer 가 `Component → Hook → Query/Mutation → A
 
 IPC mock 패턴 (vi.mock, mock helper 구성, hook 테스트 등) 상세는 `docs/optional/server-state.md §4`.
 
-실행 명령은 [`.claude/CLAUDE.md` §검증 명령](../.claude/CLAUDE.md#검증-명령) 을 따른다.
+실행 명령은 [`AGENTS.md` §검증 명령](../AGENTS.md#검증-명령) 을 따른다.
 
 ---
 
