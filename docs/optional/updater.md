@@ -146,26 +146,27 @@ export async function runUpdateFlow(onProgress?: (downloaded: number, total: num
 
 ## 8. 안티패턴 · 경계 주의
 
-| 패턴                                            | 이유 / 올바른 방향                                           |
-| :---------------------------------------------- | :----------------------------------------------------------- |
-| 비공개 서명 키/패스워드를 저장소에 커밋         | 키 유출 시 위조 업데이트 배포 가능 → env(CI 시크릿)로만 주입 |
-| component 에서 `check()`/`relaunch()` 직접 호출 | 레이어 위반 → `features/<f>/api` + hook 경유                 |
-| updater plugin 을 모바일에도 등록               | 스토어 정책 위반·불필요 → `#[cfg(desktop)]` 분기             |
-| `bundle.createUpdaterArtifacts` 누락            | 서명 아티팩트·`latest.json` 미생성 → 업데이트 자체 불가      |
-| `pubkey` 누락/키 불일치                         | 서명 검증 실패로 설치 거부                                   |
-| `check()` 의 "새 버전 없음(null/204)" 미처리    | 흐름 오류 → `!update` 분기로 조기 종료                       |
+| 패턴                                            | 이유 / 올바른 방향                                                                                                   |
+| :---------------------------------------------- | :------------------------------------------------------------------------------------------------------------------- |
+| 비공개 서명 키/패스워드를 저장소에 커밋         | 키 유출 시 위조 업데이트 배포 가능 → env(CI 시크릿)로만 주입                                                         |
+| component 에서 `check()`/`relaunch()` 직접 호출 | 레이어 위반 → `features/<f>/api` + hook 경유                                                                         |
+| updater plugin 을 모바일에도 등록               | 스토어 정책 위반·불필요 → `#[cfg(desktop)]` 분기                                                                     |
+| `bundle.createUpdaterArtifacts` 누락            | 업데이트 번들·`.sig` 서명 파일 미생성 → 업데이트 자체 불가 (`latest.json` 은 직접 작성하거나 tauri-action 으로 생성) |
+| `pubkey` 누락/키 불일치                         | 서명 검증 실패로 설치 거부                                                                                           |
+| `check()` 의 "새 버전 없음(null/204)" 미처리    | 흐름 오류 → `!update` 분기로 조기 종료                                                                               |
 
 ---
 
 ## 9. 도입 체크리스트
 
-| #   | 항목                                                             | 확인 |
-| :-- | :--------------------------------------------------------------- | :--- |
-| 1   | `tauri-plugin-updater` + `tauri-plugin-process` 의존성 추가      | □    |
-| 2   | `@tauri-apps/plugin-updater` + `@tauri-apps/plugin-process` 설치 | □    |
-| 3   | `pnpm tauri signer generate` 로 키 생성, 공개키를 conf 에 등록   | □    |
-| 4   | 비공개키/패스워드를 CI 시크릿(환경 변수)으로만 주입              | □    |
-| 5   | `bundle.createUpdaterArtifacts: true` 설정                       | □    |
-| 6   | updater plugin 을 `#[cfg(desktop)]` 로 등록                      | □    |
-| 7   | capability 에 `updater:default` + `process:default` 추가         | □    |
-| 8   | 업데이트 확인/설치를 feature API/hook 으로 감싸 component 분리   | □    |
+| #   | 항목                                                                                                                                               | 확인 |
+| :-- | :------------------------------------------------------------------------------------------------------------------------------------------------- | :--- |
+| 1   | `tauri-plugin-updater` + `tauri-plugin-process` 의존성 추가                                                                                        | □    |
+| 2   | `@tauri-apps/plugin-updater` + `@tauri-apps/plugin-process` 설치                                                                                   | □    |
+| 3   | `pnpm tauri signer generate` 로 키 생성, 공개키를 conf 에 등록                                                                                     | □    |
+| 4   | 비공개키/패스워드를 CI 시크릿(환경 변수)으로만 주입                                                                                                | □    |
+| 5   | `bundle.createUpdaterArtifacts: true` 설정                                                                                                         | □    |
+| 6   | updater plugin 을 `#[cfg(desktop)]` 로 등록                                                                                                        | □    |
+| 7   | capability 에 `updater:default` + `process:default` 추가                                                                                           | □    |
+| 8   | 업데이트 확인/설치를 feature API/hook 으로 감싸 component 분리                                                                                     | □    |
+| 9   | 두 plugin 의존성을 `Cargo.toml` 의 `[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]` 아래에 둔다 (모바일 제외) | □    |

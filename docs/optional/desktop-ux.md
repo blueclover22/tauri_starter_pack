@@ -53,7 +53,7 @@ use tauri::{
     let quit = MenuItem::with_id(app, "quit", "종료", true, None::<&str>)?;
     let menu = Menu::with_items(app, &[&quit])?;
     TrayIconBuilder::new()
-        .icon(app.default_window_icon().unwrap().clone())
+        .icon(app.default_window_icon().ok_or("default window icon 없음")?.clone())
         .menu(&menu)
         .show_menu_on_left_click(true)
         .on_menu_event(|app, event| {
@@ -117,7 +117,18 @@ await openPath("/path/to/file.pdf");
 await revealItemInDir("/path/to/file.pdf");
 ```
 
-capability: `opener:default` (또는 scope 로 허용 대상 제한).
+capability:
+
+- `opener:default` 는 `openUrl`(기본 허용 URL) 과 `revealItemInDir` 를 포함한다.
+- `openPath` 는 `opener:default` 에 **포함되지 않는다**. `opener:allow-open-path` 와 path scope 를 별도로 지정해야 한다.
+
+```jsonc
+// capabilities/default.json permissions 에 추가
+{
+  "identifier": "opener:allow-open-path",
+  "allow": [{ "path": "$APPDATA/**" }],
+}
+```
 
 ---
 
@@ -142,11 +153,12 @@ capability: `opener:default` (또는 scope 로 허용 대상 제한).
 
 ## 9. 도입 체크리스트
 
-| #   | 항목                                                                      | 확인 |
-| :-- | :------------------------------------------------------------------------ | :--- |
-| 1   | (트레이) `tauri` 의 `tray-icon` feature 활성화 + `TrayIconBuilder` 구성   | □    |
-| 2   | (창 상태) `tauri-plugin-window-state` + capability `window-state:default` | □    |
-| 3   | (단일 인스턴스) `tauri-plugin-single-instance` 를 **첫 plugin** 으로 등록 | □    |
-| 4   | (opener) `tauri-plugin-opener` + capability `opener:default`              | □    |
-| 5   | 데스크톱 전용 plugin 은 모두 `#[cfg(desktop)]` 로 분기                    | □    |
-| 6   | 트레이 메뉴 동작(종료/표시 등)을 `on_menu_event` 로 연결                  | □    |
+| #   | 항목                                                                                                                                            | 확인 |
+| :-- | :---------------------------------------------------------------------------------------------------------------------------------------------- | :--- |
+| 1   | (트레이) `tauri` 의 `tray-icon` feature 활성화 + `TrayIconBuilder` 구성                                                                         | □    |
+| 2   | (창 상태) `tauri-plugin-window-state` + capability `window-state:default`                                                                       | □    |
+| 3   | (단일 인스턴스) `tauri-plugin-single-instance` 를 **첫 plugin** 으로 등록                                                                       | □    |
+| 4   | (opener) `tauri-plugin-opener` + capability `opener:default` (`openPath` 사용 시 `opener:allow-open-path` + path scope 추가)                    | □    |
+| 5   | 데스크톱 전용 plugin 은 모두 `#[cfg(desktop)]` 로 분기                                                                                          | □    |
+| 6   | 데스크톱 전용 plugin 의존성은 `Cargo.toml` 의 `[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]` 아래에 둔다 | □    |
+| 7   | 트레이 메뉴 동작(종료/표시 등)을 `on_menu_event` 로 연결                                                                                        | □    |

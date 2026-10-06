@@ -69,7 +69,7 @@
 도입 시 추가:
 
 - HTTP 통신 (외부 API 호출 시): reqwest 공유 HttpClient → `docs/optional/backend-http.md`
-- 구조적 로컬 데이터: SQLite (`tauri-plugin-sql` 또는 `sqlx`) → `docs/optional/sqlite.md`
+- 구조적 로컬 데이터: SQLite (`sqlx`, Rust service 전용 접근) → `docs/optional/sqlite.md`
 - 인증·secure store → `docs/optional/auth.md`
 - emit/listen, Channel<T> → `docs/optional/events-channels.md`
 

@@ -31,14 +31,14 @@ Frontend new Channel<T>()
 
 ## 2. 뼈대 통합 접점
 
-| 접점                            | 뼈대 현재 상태        | 도입 시 변경                                                              |
-| :------------------------------ | :-------------------- | :------------------------------------------------------------------------ |
-| `shared/config.rs`              | `ERROR_*` / `EVENT_*` | `EVENT_*` 이벤트 이름 상수 추가                                           |
-| `capabilities/default.json`     | `core:default`        | `emit`/`listen` 시 `core:event:default` 추가 (Channel 만 쓰면 불요)       |
-| payload 타입                    | —                     | feature `model.rs` struct(`Serialize`+`Clone`) ↔ frontend type/Zod schema |
-| listener 등록 위치              | —                     | 전역은 `app/providers`, 도메인 한정은 feature `model/` (useEffect)        |
-| `AppState`/`BootStage`/`lib.rs` | —                     | **변경 없음** (Emitter 는 `AppHandle` 에서 바로 사용)                     |
-| 의존 문서                       | —                     | `server-state.md §3.4`(listener payload `safeParse`)                      |
+| 접점                            | 뼈대 현재 상태        | 도입 시 변경                                                                      |
+| :------------------------------ | :-------------------- | :-------------------------------------------------------------------------------- |
+| `shared/config.rs`              | `ERROR_*` / `EVENT_*` | `EVENT_*` 이벤트 이름 상수 추가                                                   |
+| `capabilities/default.json`     | `core:default`        | 추가 없음 — `core:event:default` 는 `core:default` 에 포함 (Channel 만 쓰면 불요) |
+| payload 타입                    | —                     | feature `model.rs` struct(`Serialize`+`Clone`) ↔ frontend type/Zod schema         |
+| listener 등록 위치              | —                     | 전역은 `app/providers`, 도메인 한정은 feature `model/` (useEffect)                |
+| `AppState`/`BootStage`/`lib.rs` | —                     | **변경 없음** (Emitter 는 `AppHandle` 에서 바로 사용)                             |
+| 의존 문서                       | —                     | `server-state.md §3.4`(listener payload `safeParse`)                              |
 
 ---
 
@@ -114,7 +114,7 @@ await invokeTauri("job_run", { onEvent: channel });
 
 ## 7. capability
 
-- listen/emit 사용 시 `core:event:default` permission 을 `capabilities/default.json` 에 추가한다 (granular 하게 좁히려면 `core:event:allow-listen` / `core:event:allow-unlisten`). deep-link 등 다른 문서와 표기를 `core:event:default` 로 통일한다.
+- listen/emit 에 필요한 `core:event:default` 는 `core:default` 에 이미 포함되어 있으므로 별도로 추가하지 않는다. event 권한을 granular 하게 좁힐 때만 `core:default` 대신 `core:event:allow-listen` / `core:event:allow-unlisten` 등을 개별 지정한다.
 - `Channel<T>` 은 invoke 반환 채널을 통하므로 event permission 이 **필요 없다**.
 
 ---

@@ -144,7 +144,7 @@ TanStack Query 도입 시 layer 가 `Component → Hook → Query/Mutation → A
 
 ## 11. Blocking I/O (spawn_blocking)
 
-- 파일·저장소 접근처럼 블로킹 성격의 작업은 `tokio::task::spawn_blocking` 으로 격리한다.
+- 파일·저장소 접근처럼 블로킹 성격의 작업은 `tauri::async_runtime::spawn_blocking` 으로 격리한다 (tokio 직접 의존 없이 사용).
 - command 나 service 의 async 흐름 안에서 직접 블로킹 API 를 호출하지 않는다.
 - timeout, retry, config 값은 `config.rs` 에 둔다.
 

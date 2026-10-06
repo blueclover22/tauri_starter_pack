@@ -76,11 +76,11 @@ Rust 와 TypeScript 의 계약 타입은 항상 일치하게 유지한다. 새 c
 
 ```rust
 // model.rs
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PingRequest { pub note: Option<String> }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize)]
 #[serde(rename_all = "camelCase")]
 pub struct PingInfo { pub message: String, pub echoed_note: Option<String> }
 ```
@@ -208,12 +208,12 @@ tauri::Builder::default()
 
 비즈니스 에러를 포함한 모든 결과를 `Ok(IpcResult<T>)` 로 반환한다. command 는 `Err` 를 반환하지 않는다 — `Err()` 를 반환하면 Tauri 가 JS 의 `Promise.reject` 로 전달하여 비즈니스 실패와 시스템 예외를 구분하기 어렵다. lock poison 등 인프라 실패도 `Ok(IpcResult::err(...))` 로 반환한다.
 
-| 오류 유형           | Rust 반환                                  | TypeScript 처리                                                                    |
-| :------------------ | :----------------------------------------- | :--------------------------------------------------------------------------------- |
-| **인프라 실패**     | `Ok(IpcResult::err(...))` (lock poison 등) | `AppError` 로 정규화                                                               |
-| **비즈니스 에러**   | `Ok(IpcResult::err(...))`                  | `AppError` 로 정규화                                                               |
-| **성공**            | `Ok(IpcResult::ok(...))`                   | `data` 반환                                                                        |
-| **예상 못한 panic** | (반환 없음)                                | invoke reject 로 전달될 수 있음 → wrapper 가 `ERROR_TAURI_INVOKE_FAILED` 로 정규화 |
+| 오류 유형           | Rust 반환                                  | TypeScript 처리                                                                                   |
+| :------------------ | :----------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| **인프라 실패**     | `Ok(IpcResult::err(...))` (lock poison 등) | `AppError` 로 정규화                                                                              |
+| **비즈니스 에러**   | `Ok(IpcResult::err(...))`                  | `AppError` 로 정규화                                                                              |
+| **성공**            | `Ok(IpcResult::ok(...))`                   | `data` 반환                                                                                       |
+| **예상 못한 panic** | (반환 없음)                                | invoke reject 또는 무응답(hang) 가능 → reject 시 wrapper 가 `ERROR_TAURI_INVOKE_FAILED` 로 정규화 |
 
 ### AppError prefix 분류
 
@@ -253,8 +253,8 @@ tauri::Builder::default()
 파일·저장소 접근처럼 블로킹 성격의 작업은 async runtime 을 직접 막지 않게 처리한다.
 
 ```rust
-// ✅ spawn_blocking 으로 격리
-let result = tokio::task::spawn_blocking(move || {
+// ✅ spawn_blocking 으로 격리 (tokio 직접 의존 없이 Tauri runtime 사용)
+let result = tauri::async_runtime::spawn_blocking(move || {
     // blocking 작업
     Ok::<_, Box<dyn std::error::Error>>(value)
 }).await;
@@ -320,15 +320,17 @@ Tauri v2 는 capability 기반 권한 관리를 사용한다. 필요한 권한�
 
 도입 시 추가되는 권한 예시 (각 가이드는 `docs/optional/` 참조):
 
-| plugin         | permission                                 | 용도                 | 가이드                                   |
-| :------------- | :----------------------------------------- | :------------------- | :--------------------------------------- |
-| `store`        | `store:default`                            | 설정 영속화          | §9 Persistence                           |
-| `opener`       | `opener:default`                           | 외부 링크 열기       | `docs/optional/desktop-ux.md`            |
-| `window-state` | `window-state:default`                     | 창 상태 복원         | `docs/optional/desktop-ux.md`            |
-| `updater`      | `updater:default`                          | 자동 업데이트        | `docs/optional/updater.md`               |
-| `dialog`/`fs`  | `dialog:default` / `fs:*`                  | 파일 다이얼로그·접근 | `docs/optional/dialog-fs.md`             |
-| `notification` | `notification:default`                     | OS 알림              | `docs/optional/notification-deeplink.md` |
-| `deep-link`    | `deep-link:default` + `core:event:default` | 딥링크               | `docs/optional/notification-deeplink.md` |
+| plugin         | permission                | 용도                 | 가이드                                   |
+| :------------- | :------------------------ | :------------------- | :--------------------------------------- |
+| `store`        | `store:default`           | 설정 영속화          | §9 Persistence                           |
+| `opener`       | `opener:default`          | 외부 링크 열기       | `docs/optional/desktop-ux.md`            |
+| `window-state` | `window-state:default`    | 창 상태 복원         | `docs/optional/desktop-ux.md`            |
+| `updater`      | `updater:default`         | 자동 업데이트        | `docs/optional/updater.md`               |
+| `dialog`/`fs`  | `dialog:default` / `fs:*` | 파일 다이얼로그·접근 | `docs/optional/dialog-fs.md`             |
+| `notification` | `notification:default`    | OS 알림              | `docs/optional/notification-deeplink.md` |
+| `deep-link`    | `deep-link:default`       | 딥링크               | `docs/optional/notification-deeplink.md` |
+
+> `core:event:default` 는 `core:default` 에 이미 포함되어 있다. event 권한을 좁힐 때만 개별 지정한다.
 
 ### CSP
 
@@ -380,16 +382,16 @@ pub fn run() {
 | Android 릴리스 빌드 | `pnpm tauri android build` |
 | iOS 릴리스 빌드     | `pnpm tauri ios build`     |
 
-초기화로 생성되는 `src-tauri/gen/android/` , `src-tauri/gen/apple/` 디렉토리는 `.gitignore` 에 포함되어 있다 (재생성 가능).
+초기화로 생성되는 `src-tauri/gen/android/` , `src-tauri/gen/apple/` 디렉토리는 커밋 대상이다. 공식 서명·딥링크 가이드가 이 디렉토리 안의 파일(`build.gradle.kts`, intent filter 등)을 직접 수정하도록 안내하기 때문이다. 단 keystore 파일(`*.jks`, `*.keystore`, `keystore.properties`)은 `.gitignore` 로 제외한다.
 
 ### 14.4 모바일 사전 요구사항
 
-| 플랫폼  | 요구                                                                           |
-| :------ | :----------------------------------------------------------------------------- |
-| Android | Android Studio + SDK + NDK + JAVA_HOME / ANDROID_HOME 환경 변수                |
-| iOS     | Xcode + Command Line Tools + CocoaPods + Apple Developer 계정 (실기기 배포 시) |
+| 플랫폼  | 요구                                                                                                                                                |
+| :------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Android | Android Studio + SDK + NDK + `JAVA_HOME` / `ANDROID_HOME` / `NDK_HOME` 환경 변수 + rustup Android target (`aarch64-linux-android` 등)               |
+| iOS     | Xcode **전체**(Command Line Tools 만으로는 불충분) + CocoaPods + rustup iOS target (`aarch64-apple-ios` 등) + Apple Developer 계정 (실기기 배포 시) |
 
-상세 환경 setup 은 [Tauri v2 모바일 가이드](https://v2.tauri.app/start/prerequisites/) 참조.
+상세 환경 setup 은 [README "구동 준비"](../README.md#구동-준비) 의 4(Android)·5(iOS)절과 [Tauri v2 Prerequisites](https://v2.tauri.app/start/prerequisites/) 참조.
 
 ### 14.5 모바일 한정 plugin 제약
 
@@ -398,6 +400,14 @@ pub fn run() {
 ```rust
 #[cfg(desktop)]
 builder = builder.plugin(tauri_plugin_window_state::Builder::default().build());
+```
+
+Cargo 의존성도 데스크톱 타깃으로 한정해 모바일 빌드에서 제외한다.
+
+```toml
+# Cargo.toml
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-window-state = "2"
 ```
 
 ---

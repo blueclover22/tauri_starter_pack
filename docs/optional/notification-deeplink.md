@@ -58,7 +58,13 @@ capability: `notification:default`.
 
 ### 2.2 등록 + single-instance 동반 (데스크톱)
 
-데스크톱에서는 이미 실행 중인 인스턴스로 링크를 전달해야 하므로 `tauri-plugin-single-instance` 를 **가장 먼저** 등록한다.
+데스크톱에서는 이미 실행 중인 인스턴스로 링크를 전달해야 하므로 `tauri-plugin-single-instance` 를 **가장 먼저** 등록한다. 딥링크 전달을 위해 single-instance 의 `deep-link` feature 를 활성화한다.
+
+```toml
+# Cargo.toml (데스크톱 전용 의존성 — desktop-ux.md §9 참조)
+[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
+tauri-plugin-single-instance = { version = "2", features = ["deep-link"] }
+```
 
 ```rust
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -76,6 +82,19 @@ pub fn run() {
     builder = builder.plugin(tauri_plugin_deep_link::init());
     // ... 나머지 체인
 }
+```
+
+Linux(항상)와 Windows(개발 빌드)는 설치(번들) 전 실행 시 OS 에 스킴이 등록되어 있지 않으므로, `.setup()` 에서 런타임 등록한다 (macOS 는 번들 `Info.plist` 로 등록되어 불요). cfg 조건은 공식 deep-linking 가이드와 동일하다.
+
+```rust
+.setup(|app| {
+    #[cfg(any(target_os = "linux", all(debug_assertions, windows)))]
+    {
+        use tauri_plugin_deep_link::DeepLinkExt;
+        app.deep_link().register_all()?;
+    }
+    Ok(())
+})
 ```
 
 ### 2.3 Frontend 수신
@@ -101,10 +120,9 @@ const unlisten = await onOpenUrl((urls) => {
 
 ### 2.4 capability
 
-딥링크 이벤트 수신에는 보통 `core:event:default` 가 함께 필요하다. 모바일은 별도 capability 파일(`platforms: ["iOS", "android"]`)로 분리한다.
+`core:event:default` 는 이미 `core:default` 에 포함되어 있으므로 별도로 추가하지 않는다 (event 권한을 좁힐 때만 개별 지정). 모바일은 별도 capability 파일(`platforms: ["iOS", "android"]`)로 분리한다.
 
 ```jsonc
-"core:event:default",
 "deep-link:default"
 ```
 
@@ -130,13 +148,13 @@ Component → useNotify hook → api
 
 ## 4. 뼈대 통합 접점
 
-| 접점                        | 뼈대 현재 상태          | 도입 시 변경                                                           |
-| :-------------------------- | :---------------------- | :--------------------------------------------------------------------- |
-| `lib.rs` builder            | log plugin + `app_ping` | single-instance(첫, `#[cfg(desktop)]`) → deep-link → notification 등록 |
-| `tauri.conf.json`           | 기본                    | (딥링크) `plugins.deep-link.desktop.schemes`                           |
-| `capabilities/default.json` | `core:default`          | `notification:default` / `deep-link:default` + `core:event:default`    |
-| 모바일 설정                 | —                       | associated domains(iOS) / intent filter(Android), 별도 capability 파일 |
-| feature 폴더                | `app` 샘플              | 알림·딥링크 호출/수신을 feature `api`/hook 경유                        |
+| 접점                        | 뼈대 현재 상태          | 도입 시 변경                                                                                  |
+| :-------------------------- | :---------------------- | :-------------------------------------------------------------------------------------------- |
+| `lib.rs` builder            | log plugin + `app_ping` | single-instance(첫, `#[cfg(desktop)]`) → deep-link → notification 등록                        |
+| `tauri.conf.json`           | 기본                    | (딥링크) `plugins.deep-link.desktop.schemes`                                                  |
+| `capabilities/default.json` | `core:default`          | `notification:default` / `deep-link:default` (`core:event:default` 는 `core:default` 에 포함) |
+| 모바일 설정                 | —                       | associated domains(iOS) / intent filter(Android), 별도 capability 파일                        |
+| feature 폴더                | `app` 샘플              | 알림·딥링크 호출/수신을 feature `api`/hook 경유                                               |
 
 ---
 
@@ -155,13 +173,14 @@ Component → useNotify hook → api
 
 ## 6. 도입 체크리스트
 
-| #   | 항목                                                                          | 확인 |
-| :-- | :---------------------------------------------------------------------------- | :--- |
-| 1   | (알림) `tauri-plugin-notification` + `@tauri-apps/plugin-notification`        | □    |
-| 2   | (알림) capability `notification:default`, 권한 요청 흐름 구현                 | □    |
-| 3   | (딥링크) `tauri-plugin-deep-link` + `@tauri-apps/plugin-deep-link`            | □    |
-| 4   | (딥링크) `tauri.conf.json` 에 `desktop.schemes` 등록                          | □    |
-| 5   | (딥링크) 데스크톱은 `tauri-plugin-single-instance` 를 **첫 plugin** 으로 등록 | □    |
-| 6   | (딥링크) capability `deep-link:default` + `core:event:default`                | □    |
-| 7   | (딥링크) 모바일은 associated domains / intent filter 추가 설정                | □    |
-| 8   | 알림/딥링크 호출·수신을 feature API/hook 으로 감싸 component 분리             | □    |
+| #   | 항목                                                                                                     | 확인 |
+| :-- | :------------------------------------------------------------------------------------------------------- | :--- |
+| 1   | (알림) `tauri-plugin-notification` + `@tauri-apps/plugin-notification`                                   | □    |
+| 2   | (알림) capability `notification:default`, 권한 요청 흐름 구현                                            | □    |
+| 3   | (딥링크) `tauri-plugin-deep-link` + `@tauri-apps/plugin-deep-link`                                       | □    |
+| 4   | (딥링크) `tauri.conf.json` 에 `desktop.schemes` 등록                                                     | □    |
+| 5   | (딥링크) 데스크톱은 `tauri-plugin-single-instance`(`features = ["deep-link"]`)를 **첫 plugin** 으로 등록 | □    |
+| 6   | (딥링크) capability `deep-link:default` (`core:event:default` 는 `core:default` 에 포함)                 | □    |
+| 7   | (딥링크) Windows·Linux 개발 실행용 `app.deep_link().register_all()?` 를 `.setup()` 에 추가               | □    |
+| 8   | (딥링크) 모바일은 associated domains / intent filter 추가 설정                                           | □    |
+| 9   | 알림/딥링크 호출·수신을 feature API/hook 으로 감싸 component 분리                                        | □    |

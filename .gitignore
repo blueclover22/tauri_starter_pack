@@ -34,9 +34,10 @@ src-tauri/target/
 src-tauri/gen/schemas/
 src-tauri/WixTools/
 
-# Tauri mobile (generated)
-src-tauri/gen/android/
-src-tauri/gen/apple/
+# Tauri mobile — gen/android·gen/apple 은 커밋한다 (서명·딥링크 설정을 직접 수정). 서명 키만 제외.
+*.jks
+*.keystore
+keystore.properties
 
 # Env
 .env

@@ -66,12 +66,12 @@ pub async fn app_ping(request: PingRequest) -> Result<IpcResult<PingInfo>, Strin
 
 > 본 표는 도메인 command 도입 시점에 필요한 케이스만 채택한다. 도메인 예시는 `docs/optional/command-examples.md`.
 
-| 유형            | 조건                          | 응답 (요약)                                                         |
-| --------------- | ----------------------------- | ------------------------------------------------------------------- |
-| IPC invoke 실패 | Tauri IPC 호출 자체 실패      | invoke wrapper `catch` 경로 — `ERROR_TAURI_INVOKE_FAILED` 로 정규화 |
-| 비즈니스 에러   | service 내부 도메인 로직 실패 | `IpcResult::err(code, message, retryable)` (Ok-Only)                |
-| 인프라 실패     | lock poison 등 시스템 예외    | `IpcResult::err(code, message, retryable)` (Ok-Only)                |
-| 예상 못한 panic | unwrap / 데드락 등            | invoke reject 가능 — `ERROR_TAURI_INVOKE_FAILED` 로 정규화          |
+| 유형            | 조건                          | 응답 (요약)                                                                            |
+| --------------- | ----------------------------- | -------------------------------------------------------------------------------------- |
+| IPC invoke 실패 | Tauri IPC 호출 자체 실패      | invoke wrapper `catch` 경로 — `ERROR_TAURI_INVOKE_FAILED` 로 정규화                    |
+| 비즈니스 에러   | service 내부 도메인 로직 실패 | `IpcResult::err(code, message, retryable)` (Ok-Only)                                   |
+| 인프라 실패     | lock poison 등 시스템 예외    | `IpcResult::err(code, message, retryable)` (Ok-Only)                                   |
+| 예상 못한 panic | unwrap / 데드락 등            | invoke reject 또는 무응답(hang) 가능 — reject 시 `ERROR_TAURI_INVOKE_FAILED` 로 정규화 |
 
 ---
 

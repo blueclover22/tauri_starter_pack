@@ -45,7 +45,7 @@ service 가 ERROR_AUTH_EXPIRED 감지
 | `AppState` (`store/state.rs`) | `teardown` 필드만                            | `AuthState`(토큰 메모리 보관) 를 필드로 추가 또는 `shared/auth/state.rs` 참조                 |
 | `BootStage` (`lifecycle.rs`)  | `InitPlugins`/`PrepareState`/`RegisterState` | `RestoreAuthSession` 추가 (실패 정책: **경고 후 계속**)                                       |
 | `lib.rs` builder              | log plugin + `app_ping`                      | secure store 를 plugin 으로 택한 경우만 등록 (`keyring` crate 는 plugin 아님)                 |
-| `capabilities/default.json`   | `core:default`                               | `auth-session-cleared` emit/listen 시 `core:event:default` 추가                               |
+| `capabilities/default.json`   | `core:default`                               | 추가 없음 — `core:event:default` 는 `core:default` 에 포함                                    |
 | `shared/config.rs`            | `ERROR_*` / `EVENT_*`                        | `ERROR_AUTH_*`, endpoint path, `EVENT_AUTH_SESSION_CLEARED`                                   |
 | 신규 파일                     | —                                            | `features/auth/{commands,service,api,model,config}.rs`, `shared/auth/{state,secure_store}.rs` |
 | 의존 문서                     | —                                            | `backend-http.md`(토큰 주입) · `server-state.md`(표시 상태) · `events-channels.md`(emit)      |
