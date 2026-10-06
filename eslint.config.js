@@ -163,7 +163,7 @@ export default [
       // 처리 안 된 Promise 금지 (type-aware)
       "@typescript-eslint/no-floating-promises": "error",
       "@typescript-eslint/no-misused-promises": "error",
-      // localStorage / sessionStorage 직접 접근 금지 (coding-rules §상태)
+      // localStorage / sessionStorage 직접 접근 금지 (coding-rules §3)
       "no-restricted-globals": [
         "error",
         { name: "localStorage", message: "localStorage 직접 접근 금지 (docs/coding-rules.md)." },
