@@ -21,7 +21,7 @@ plugins: [babel({ presets: [reactCompilerPreset()] }), react(), tailwindcss()];
 - **순서 주의**: `babel()`가 `react()`보다 **뒤**에 오면 컴파일러가 조용히 미동작한다(에러 없이 그냥 안 돎).
 - **React 19 런타임 내장** → `react-compiler-runtime` 폴리필 불필요. `reactCompilerPreset()`이 `react/compiler-runtime`을 `optimizeDeps`에 자동 포함한다.
 
-린트는 `eslint-plugin-react-hooks` v6의 `recommended-latest`(Rules of React + 컴파일러 규칙)로 `src/**` 에 적용된다 (`eslint.config.js`).
+린트는 `eslint-plugin-react-hooks` v7의 `recommended-latest`(Rules of React + 컴파일러 규칙)로 `src/**` 에 적용된다 (`eslint.config.js`).
 
 ---
 
@@ -71,7 +71,7 @@ plugins: [react(), tailwindcss()]; // babel(...) 삭제
 
 의존성까지 정리하려면 `@rolldown/plugin-babel`·`babel-plugin-react-compiler` 를 제거한다. (`reactCompilerPreset`은 `@vitejs/plugin-react` 소속이라 남는다.)
 
-린트 규칙 강도를 낮추려면 `eslint.config.js` 의 `reactHooks.configs["recommended-latest"]` 를 필요한 규칙만 선별하는 형태로 바꾼다.
+린트 규칙 강도를 낮추려면 `eslint.config.js` 의 `reactHooks.configs.flat["recommended-latest"]` 를 필요한 규칙만 선별하는 형태로 바꾼다.
 
 ---
 

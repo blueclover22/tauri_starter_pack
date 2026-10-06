@@ -22,11 +22,11 @@ export default [
       },
     },
   },
-  // React Compiler / Rules of React 규칙 (eslint-plugin-react-hooks v6) — src 한정
-  ...reactHooks.configs["recommended-latest"].map((c) => ({
-    ...c,
+  // React Compiler / Rules of React 규칙 (eslint-plugin-react-hooks v7 flat config) — src 한정
+  {
+    ...reactHooks.configs.flat["recommended-latest"],
     files: ["src/**/*.{ts,tsx}"],
-  })),
+  },
   // 문서 규칙의 기계 강제 — src 한정
   {
     files: ["src/**/*.{ts,tsx}"],
