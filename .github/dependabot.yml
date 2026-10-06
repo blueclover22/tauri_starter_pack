@@ -1,13 +1,18 @@
 # 스타터 팩 저장소 유지보수용 — 신규 프로젝트에는 포함하지 않는다 (README "사용 방법" 참조).
 version: 2
+
+# npm(@tauri-apps/*) 과 cargo(tauri*) 는 같은 minor 로 맞아야 tauri build 가 통과한다.
+# 두 생태계를 한 PR 로 묶어 버전 불일치 상태로 병합되는 것을 막는다.
+multi-ecosystem-groups:
+  app-deps:
+    schedule:
+      interval: weekly
+
 updates:
   - package-ecosystem: npm
     directory: /
-    schedule:
-      interval: weekly
-    groups:
-      npm-minor-patch:
-        update-types: [minor, patch]
+    patterns: ["*"]
+    multi-ecosystem-group: app-deps
     ignore:
       # TypeScript 는 6 계열 유지 (7.1 에서 compiler API 제공 전까지)
       - dependency-name: typescript
@@ -18,11 +23,8 @@ updates:
 
   - package-ecosystem: cargo
     directory: /src-tauri
-    schedule:
-      interval: weekly
-    groups:
-      cargo-minor-patch:
-        update-types: [minor, patch]
+    patterns: ["*"]
+    multi-ecosystem-group: app-deps
 
   - package-ecosystem: github-actions
     directory: /
