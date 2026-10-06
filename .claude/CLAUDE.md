@@ -76,3 +76,10 @@
 | 빌드 (frontend) | `pnpm build`        |
 | 빌드 (desktop)  | `pnpm tauri build`  |
 | 포맷 (검증)     | `pnpm format:check` |
+
+## 스타터 팩 유지보수 전용 파일
+
+이 저장소는 신규 Tauri 프로젝트의 기반이다. `.github/`(CI 워크플로·Dependabot 설정)는 **스타터 팩 저장소 유지보수 전용**이며 뼈대 규칙·검증 명령의 일부가 아니다.
+
+- 신규 프로젝트는 `.github/` 를 제거한 상태(CI·Dependabot 없음)로 시작한다 (`README.md` "사용 방법" 2단계).
+- 신규 프로젝트에서 `.github/` 가 없다는 이유로 CI·Dependabot 을 임의로 추가하지 않는다. 필요하면 사용자 요청에 따라 프로젝트에 맞게 새로 구성한다.

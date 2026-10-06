@@ -9,6 +9,7 @@ Tauri v2 + React + TypeScript + Tailwind v4 기반 데스크톱·모바일 앱 �
 
 1. 이 디렉토리를 새 프로젝트 위치로 복사한다.
 2. 기존 `.git/` 을 제거하고 `git init` 으로 새 저장소를 초기화한다.
+   - `.github/`(CI 워크플로·Dependabot 설정)도 함께 제거한다. 스타터 팩 저장소 유지보수 전용이며, 신규 프로젝트는 CI·Dependabot 이 없는 상태로 시작한다. 필요해지면 프로젝트에 맞게 새로 구성한다.
 3. 프로젝트 식별자를 교체한다 (예제값 `tauri-starter-pack` / `com.example.tauristarterpack` 를 그대로 배포하지 않는다):
    - `src-tauri/tauri.conf.json` — `productName`, `identifier`(번들 ID, 역-도메인 형식), `app.windows[].title`
    - `package.json` — `name`
