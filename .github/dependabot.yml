@@ -12,6 +12,9 @@ updates:
       # TypeScript 는 6 계열 유지 (7.1 에서 compiler API 제공 전까지)
       - dependency-name: typescript
         update-types: [version-update:semver-major]
+      # @types/node 는 런타임 Node 메이저(.nvmrc, engines)와 맞춘다 — Node 메이저 상향 시 함께 올린다
+      - dependency-name: "@types/node"
+        update-types: [version-update:semver-major]
 
   - package-ecosystem: cargo
     directory: /src-tauri
