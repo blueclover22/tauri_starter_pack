@@ -27,7 +27,7 @@ Tauri v2 + React + TypeScript + Tailwind v4 기반 데스크톱·모바일 앱 �
 | 경로                                     | 내용                                                           |
 | :--------------------------------------- | :------------------------------------------------------------- |
 | `docs/architecture.md`                   | 폴더 구조·도메인 슬라이스·공용 contract                        |
-| `docs/tauri-guide.md`                    | IPC wrapper·command 설계·Ok-Only·capability·logging·모바일     |
+| `docs/tauri-guide.md`                    | IPC wrapper·command 설계·Ok-Only·capability·logging            |
 | `docs/tauri-commands.md`                 | command 계약 공통 규칙 + 샘플                                  |
 | `docs/coding-rules.md`                   | 코드 작성 규칙                                                 |
 | `docs/optional/server-state.md`          | (도입 시) TanStack Query / Zustand / Zod                       |
@@ -42,6 +42,7 @@ Tauri v2 + React + TypeScript + Tailwind v4 기반 데스크톱·모바일 앱 �
 | `docs/optional/desktop-ux.md`            | (도입 시) 트레이·창 상태·단일 인스턴스·opener                  |
 | `docs/optional/react-compiler.md`        | (기본 활성) React Compiler 동작·예외·비활성                    |
 | `docs/optional/routing.md`               | (도입 시) 화면 라우팅·pages layer                              |
+| `docs/optional/mobile.md`                | (도입 시) 모바일(iOS/Android) 빌드                             |
 | `AGENTS.md`                              | AI 에이전트 작업 규칙 SSOT (구동 순서, 참조 문서, 검증 명령)   |
 | `.claude/CLAUDE.md`                      | Claude Code 진입점 (`@../AGENTS.md` import + Claude 전용 사항) |
 

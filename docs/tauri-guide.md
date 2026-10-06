@@ -2,94 +2,31 @@
 
 이 문서는 Tauri v2 기반 데스크톱·모바일 애플리케이션에서 Tauri 고유 메커니즘의 구현 방법과 운영 규칙을 정리한다. 구조 전반은 [architecture.md](./architecture.md), 코드 작성 규칙은 [coding-rules.md](./coding-rules.md) 를 기준으로 한다.
 
-본 문서는 **뼈대 기준**으로 작성되었다. 추가 기능별 가이드는 `docs/optional/` 하위 문서를 참조한다.
-
----
-
-## 목차
-
-| #   | 섹션                   | 내용                 |
-| :-- | :--------------------- | :------------------- |
-| 1   | Core Rules             | 핵심 원칙            |
-| 2   | Folder Structure 요약  | 폴더 구조 요약       |
-| 3   | Layer Responsibilities | 레이어별 역할        |
-| 4   | Type Sync (Rust ↔ TS)  | 타입 계약 동기화     |
-| 5   | Shared Invoke Wrapper  | 공통 IPC wrapper     |
-| 6   | API Layer Convention   | feature API 규칙     |
-| 7   | Command Design         | command 설계 규칙    |
-| 8   | Error Handling         | 에러 처리 (Ok-Only)  |
-| 9   | Persistence            | 설정 영속화          |
-| 10  | Blocking I/O           | 블로킹 I/O           |
-| 11  | Setup / Lifecycle      | 초기화·lifecycle     |
-| 12  | Capability 권한        | 권한 관리            |
-| 13  | Logging                | 로깅                 |
-| 14  | Mobile 빌드            | 모바일 (iOS/Android) |
-| 15  | Anti-patterns          | 금지 패턴            |
-
-### 추가 도입 가이드
-
-기능 도입 시 참조할 `docs/optional/*.md` 목록은 [`AGENTS.md` §참조 문서](../AGENTS.md#참조-문서) 를 따른다.
+본 문서는 **뼈대 기준**으로 작성되었다. 추가 기능별 가이드(`docs/optional/*.md`) 목록은 [`AGENTS.md` §참조 문서](../AGENTS.md#참조-문서) 를 따른다.
 
 ---
 
 ## 1. Core Rules
 
-- component 에서 `invoke` 를 직접 호출하지 않는다. 모든 Tauri 호출은 feature API layer 를 통해서만 진행한다.
-- Rust command handler 는 얇게 유지하고 실제 비즈니스 로직은 `service.rs` 에 둔다.
-- 입력/출력 계약은 Rust `model` 과 TS 타입을 함께 관리한다.
+component 에서 `invoke` 를 직접 호출하지 않고 모든 Tauri 호출은 feature API layer 를 통해서만 진행한다. Rust command handler 는 얇게 유지하고 비즈니스 로직은 `service.rs` 에 둔다. 입력/출력 계약은 Rust `model` 과 TS 타입을 함께 관리한다 (`coding-rules.md §5`·`§10`).
 
 ---
 
 ## 2. Folder Structure 요약
 
-`architecture.md §7` 을 기준으로 한다. 핵심 파일 역할:
-
-| 파일                                        | 역할                                        |
-| ------------------------------------------- | ------------------------------------------- |
-| `src-tauri/src/shared/types/ipc.rs`         | `IpcResult<T>`, `AppError` 공용 타입        |
-| `src-tauri/src/shared/lib/response.rs`      | `response::ok(data)` helper                 |
-| `src-tauri/src/shared/store/state.rs`       | `AppState` 정의                             |
-| `src-tauri/src/shared/runtime/lifecycle.rs` | `BootStage`, `run_boot`, `TeardownRegistry` |
-| `src-tauri/src/lib.rs`                      | command 등록 (`generate_handler!`)          |
-| `src/shared/lib/tauri/invoke.ts`            | 공통 invoke wrapper                         |
-| `src/shared/types/ipc.ts`                   | `IpcResponse<T>`, `AppError`                |
+폴더 구조와 핵심 파일 역할(`ipc.rs`, `response.rs`, `state.rs`, `lifecycle.rs`, `lib.rs`, `invoke.ts`, `ipc.ts`)은 `architecture.md §7.4`·`§7.5` 를 기준으로 한다.
 
 ---
 
 ## 3. Layer Responsibilities
 
-| 계층             | 역할                                                                    |
-| :--------------- | :---------------------------------------------------------------------- |
-| **Component**    | UI 렌더링·event 연결. `invoke`/`fetch`/parsing 을 직접 하지 않는다.     |
-| **Hook**         | 화면 조합·로컬 state.                                                   |
-| **API**          | Tauri command 호출 경계. command 이름·payload 결정. invoke helper 사용. |
-| **Parser**       | response parsing, error normalization, 매핑 로직.                       |
-| **Rust Command** | 입력 수신 → service 호출 → `IpcResult<T>` 포장. 분기·로직 없음.         |
-| **Rust Service** | 실제 비즈니스 로직.                                                     |
-| **Rust Model**   | request/response 계약 기준. frontend 타입과 1:1.                        |
+계층별 역할은 `architecture.md §2`(관심사 분리)·`§3`(Process Model) 을 기준으로 한다. Tauri 관점의 추가 규칙: Component 는 `invoke`/`fetch`/parsing 을 직접 하지 않고, API 는 command 이름·payload 를 결정하며 invoke helper 를 사용하고, Rust Command 는 입력 수신 → service 호출 → `IpcResult<T>` 포장만 한다 (분기·로직 없음).
 
 ---
 
 ## 4. Type Sync (Rust ↔ TS)
 
-Rust 와 TypeScript 의 계약 타입은 항상 일치하게 유지한다. 새 command 를 추가하면 request/response 타입을 먼저 정의한다. Rust struct 에는 `#[serde(rename_all = "camelCase")]` 를 적용한다.
-
-```rust
-// model.rs
-#[derive(Debug, Clone, Deserialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PingRequest { pub note: Option<String> }
-
-#[derive(Debug, Clone, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct PingInfo { pub message: String, pub echoed_note: Option<String> }
-```
-
-```ts
-// types
-export type PingRequest = { note?: string };
-export type PingInfo = { message: string; echoedNote?: string };
-```
+Rust 와 TypeScript 의 계약 타입은 항상 일치하게 유지한다. 새 command 를 추가하면 request/response 타입을 먼저 정의한다. Rust struct 에는 `#[serde(rename_all = "camelCase")]` 를 적용한다. 공용 contract(`IpcResult`/`IpcResponse`/`AppError`) 정의는 `architecture.md §6`, 샘플 타입(`PingRequest`/`PingInfo`)은 `tauri-commands.md` 를 참조한다.
 
 ---
 
@@ -140,31 +77,10 @@ export async function invokeTauri<TResponse>(
 
 ## 6. API Layer Convention
 
-```ts
-// src/features/app/api/appApi.ts (뼈대 샘플)
-import { invokeTauri } from "@/shared/lib/tauri/invoke";
-import { parsePingInfo } from "./appParsers";
-import type { PingInfo } from "./appParsers";
-
-export type PingRequest = { note?: string };
-
-export const appApi = {
-  ping: async (note?: string): Promise<PingInfo> => {
-    const raw = await invokeTauri<unknown>("app_ping", {
-      request: { note } satisfies PingRequest,
-    });
-    return parsePingInfo(raw);
-  },
-};
-```
+샘플 API 코드(`appApi.ts`)는 `tauri-commands.md` 를 참조한다.
 
 - wrapper 는 `unknown` 으로 받고, 응답 형태 검증·정규화는 parser 로 분리한다 (Zod 도입 시 `docs/optional/server-state.md §3`).
-
-- Feature API: `src/features/[feature]/api/[feature]Api.ts` (command 이름·payload 계약)
-- Feature parser: `src/features/[feature]/api/[feature]Parsers.ts` (응답 파싱·정규화)
-- Shared wrapper: `src/shared/lib/tauri/invoke.ts`
-
-서버 상태 캐싱 (TanStack Query) 은 도입 시 `docs/optional/server-state.md` 참조.
+- Feature API(`[feature]Api.ts`: command 이름·payload 계약) 와 parser(`[feature]Parsers.ts`: 응답 파싱·정규화) 는 `src/features/[feature]/api/` 에 두고, shared wrapper 는 `src/shared/lib/tauri/invoke.ts` 를 쓴다.
 
 ---
 
@@ -172,22 +88,9 @@ export const appApi = {
 
 - command 이름은 `[feature]_[action]` 형식을 사용한다.
 - 입력 필드가 여러 개면 struct request model 을 우선한다. output 은 named response model 로 관리한다.
-- 직렬화는 공통 `response::ok()` helper 로 통일한다. command 별 error code 는 feature `config.rs` 에 모은다.
-
-```rust
-// config.rs — feature 별 에러 코드 상수 (한 도메인 = 한 카테고리, §8 분류표의 카테고리를 쓴다)
-pub const ERROR_VALIDATION_PING_FAILED: &str = "ERROR_VALIDATION_PING_FAILED";
-
-// commands.rs — Ok-Only: 비즈니스 에러도 Ok(IpcResult::err(...)) 로 반환한다.
-// service 는 Result<_, String>(Err=message), command 가 code·retryable 을 부여한다.
-#[tauri::command]
-pub async fn app_ping(request: PingRequest) -> Result<IpcResult<PingInfo>, String> {
-    match service::ping(&request) {
-        Ok(info) => Ok(response::ok(info)),
-        Err(message) => Ok(IpcResult::err(config::ERROR_VALIDATION_PING_FAILED, message, false)),
-    }
-}
-```
+- 직렬화는 공통 `response::ok()` helper 로 통일한다. command 별 error code 는 feature `config.rs` 에 모으고 §8 분류표의 카테고리를 쓴다 (카테고리는 도메인이 아니라 에러의 처리 방식으로 고른다).
+- Ok-Only: 비즈니스 에러도 `Ok(IpcResult::err(...))` 로 반환한다. service 는 `Result<_, String>`(Err=message) 을 반환하고, command 가 code·retryable 을 부여한다.
+- 샘플 command(`app_ping`)의 코드는 `tauri-commands.md` 를 참조한다.
 
 ```rust
 // lib.rs — command 등록
@@ -197,8 +100,6 @@ tauri::Builder::default()
         // 새 도메인 command 추가 시 여기에 등록
     ])
 ```
-
-도메인별 command 예시는 `docs/optional/command-examples.md` 참조.
 
 ---
 
@@ -238,13 +139,7 @@ tauri::Builder::default()
 
 > 뼈대 단계에서는 `tauri-plugin-store` 를 등록하지 않는다. 도입 시 `Cargo.toml` 의존성 + `lib.rs` 의 `.plugin(...)` + `capabilities/default.json` 의 `store:default` 권한을 함께 추가한다.
 
-| 데이터 유형        | 저장소                                | 가이드                    |
-| :----------------- | :------------------------------------ | :------------------------ |
-| 비민감 설정        | `tauri-plugin-store`                  | 본 절                     |
-| 구조적 로컬 데이터 | SQLite                                | `docs/optional/sqlite.md` |
-| 민감 데이터 (토큰) | Rust `AppState` 메모리 / secure store | `docs/optional/auth.md`   |
-
-민감 데이터(JWT 토큰 등)는 `tauri-plugin-store` / SQLite 에 저장하지 않는다.
+데이터 유형별 저장소 선택은 `architecture.md §8` 을 따른다. 민감 데이터(JWT 토큰 등)는 `tauri-plugin-store` / SQLite 에 저장하지 않는다.
 
 ---
 
@@ -318,17 +213,7 @@ Tauri v2 는 capability 기반 권한 관리를 사용한다. 필요한 권한�
 | `core`        | `core:default` | Tauri 기본 기능 |
 | `log`         | `log:default`  | 로그 출력       |
 
-도입 시 추가되는 권한 예시 (각 가이드는 `docs/optional/` 참조):
-
-| plugin         | permission                | 용도                 | 가이드                                   |
-| :------------- | :------------------------ | :------------------- | :--------------------------------------- |
-| `store`        | `store:default`           | 설정 영속화          | §9 Persistence                           |
-| `opener`       | `opener:default`          | 외부 링크 열기       | `docs/optional/desktop-ux.md`            |
-| `window-state` | `window-state:default`    | 창 상태 복원         | `docs/optional/desktop-ux.md`            |
-| `updater`      | `updater:default`         | 자동 업데이트        | `docs/optional/updater.md`               |
-| `dialog`/`fs`  | `dialog:default` / `fs:*` | 파일 다이얼로그·접근 | `docs/optional/dialog-fs.md`             |
-| `notification` | `notification:default`    | OS 알림              | `docs/optional/notification-deeplink.md` |
-| `deep-link`    | `deep-link:default`       | 딥링크               | `docs/optional/notification-deeplink.md` |
+도입 시 추가되는 권한은 해당 plugin 가이드에서 관리한다: `store:default`(§9 Persistence), `opener`·`window-state`(`docs/optional/desktop-ux.md`), `updater`(`docs/optional/updater.md`), `dialog`/`fs`(`docs/optional/dialog-fs.md`), `notification`·`deep-link`(`docs/optional/notification-deeplink.md`).
 
 > `core:event:default` 는 `core:default` 에 이미 포함되어 있다. event 권한을 좁힐 때만 개별 지정한다.
 
@@ -348,81 +233,18 @@ Tauri v2 는 capability 기반 권한 관리를 사용한다. 필요한 권한�
 
 ## 14. Mobile 빌드 (iOS / Android)
 
-Tauri v2 는 동일 코드베이스에서 데스크톱·모바일을 함께 빌드한다.
-
-### 14.1 `Cargo.toml` 필수 설정
-
-```toml
-[lib]
-name = "app_lib"
-crate-type = ["staticlib", "cdylib", "rlib"]
-```
-
-`staticlib` / `cdylib` 가 모바일 (iOS / Android) 빌드의 필수 출력이다. `rlib` 는 데스크톱·내부 의존성용.
-
-### 14.2 `src/lib.rs` 의 mobile entry point
-
-```rust
-#[cfg_attr(mobile, tauri::mobile_entry_point)]
-pub fn run() {
-    // 빌더 체인
-}
-```
-
-`src/main.rs` 는 데스크톱 entry 로 `app_lib::run()` 만 호출한다. 모바일 빌드에서는 `lib.rs` 의 `run()` 이 entry 가 된다.
-
-### 14.3 초기화 / 빌드 명령
-
-| 작업                | 명령                       |
-| :------------------ | :------------------------- |
-| Android 초기화      | `pnpm tauri android init`  |
-| iOS 초기화          | `pnpm tauri ios init`      |
-| Android 개발 실행   | `pnpm tauri android dev`   |
-| iOS 개발 실행       | `pnpm tauri ios dev`       |
-| Android 릴리스 빌드 | `pnpm tauri android build` |
-| iOS 릴리스 빌드     | `pnpm tauri ios build`     |
-
-초기화로 생성되는 `src-tauri/gen/android/` , `src-tauri/gen/apple/` 디렉토리는 커밋 대상이다. 공식 서명·딥링크 가이드가 이 디렉토리 안의 파일(`build.gradle.kts`, intent filter 등)을 직접 수정하도록 안내하기 때문이다. 단 keystore 파일(`*.jks`, `*.keystore`, `keystore.properties`)은 `.gitignore` 로 제외한다.
-
-### 14.4 모바일 사전 요구사항
-
-| 플랫폼  | 요구                                                                                                                                                |
-| :------ | :-------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Android | Android Studio + SDK + NDK + `JAVA_HOME` / `ANDROID_HOME` / `NDK_HOME` 환경 변수 + rustup Android target (`aarch64-linux-android` 등)               |
-| iOS     | Xcode **전체**(Command Line Tools 만으로는 불충분) + CocoaPods + rustup iOS target (`aarch64-apple-ios` 등) + Apple Developer 계정 (실기기 배포 시) |
-
-상세 환경 setup 은 [README "구동 준비"](../README.md#구동-준비) 의 4(Android)·5(iOS)절과 [Tauri v2 Prerequisites](https://v2.tauri.app/start/prerequisites/) 참조.
-
-### 14.5 모바일 한정 plugin 제약
-
-일부 plugin (예: `tauri-plugin-window-state`) 은 데스크톱 전용이다. plugin 의 `cfg` 분기로 모바일에서는 제외한다.
-
-```rust
-#[cfg(desktop)]
-builder = builder.plugin(tauri_plugin_window_state::Builder::default().build());
-```
-
-Cargo 의존성도 데스크톱 타깃으로 한정해 모바일 빌드에서 제외한다.
-
-```toml
-# Cargo.toml
-[target.'cfg(any(target_os = "macos", windows, target_os = "linux"))'.dependencies]
-tauri-plugin-window-state = "2"
-```
+모바일(iOS/Android) 빌드 설정·명령·제약은 [docs/optional/mobile.md](./optional/mobile.md) 를 따른다. 단 `[lib] crate-type = ["staticlib", "cdylib", "rlib"]` 와 `#[cfg_attr(mobile, tauri::mobile_entry_point)]` 는 뼈대 기본으로 유지한다.
 
 ---
 
 ## 15. Anti-patterns
 
-| 패턴                                            | 이유                                        |
-| ----------------------------------------------- | ------------------------------------------- |
-| Component 에서 직접 `invoke()` 호출             | 레이어 규칙 위반                            |
-| API layer 없이 command 이름을 UI 에서 직접 호출 | 계약 분리 불가                              |
-| Frontend 에서 `fetch` 로 백엔드 직접 호출       | 토큰 노출, 보안 모델 붕괴                   |
-| Rust command 에 비즈니스 로직 과도 작성         | command 는 얇은 진입점, 로직은 `service.rs` |
-| `serde_json::Value` 를 계약 타입처럼 남용       | 타입 안전성 손실                            |
-| Rust command 에서 `Err(String)` 반환            | 비즈니스/시스템 에러 구분 불가              |
-| `await` 를 걸친 채 `Mutex`/`RwLock` guard 유지  | 데드락 위험 (clippy `await_holding_lock`)   |
-| async fn 에서 직접 블로킹 I/O 호출              | tokio async runtime 차단                    |
-| capabilities 에 불필요한 권한 등록              | 최소 권한 원칙 위반                         |
-| `[lib]` crate-type 에 `cdylib`/`staticlib` 누락 | 모바일 빌드 불가                            |
+구조·계층 관련 금지 패턴(component 의 직접 `invoke()`/`fetch`, command 의 과도한 로직, `serde_json::Value` 남용 등)은 `architecture.md §16` 을 따른다. 본 문서 주제의 금지 패턴:
+
+| 패턴                                            | 이유                                      |
+| ----------------------------------------------- | ----------------------------------------- |
+| API layer 없이 command 이름을 UI 에서 직접 호출 | 계약 분리 불가                            |
+| Rust command 에서 `Err(String)` 반환            | 비즈니스/시스템 에러 구분 불가            |
+| `await` 를 걸친 채 `Mutex`/`RwLock` guard 유지  | 데드락 위험 (clippy `await_holding_lock`) |
+| async fn 에서 직접 블로킹 I/O 호출              | tokio async runtime 차단                  |
+| capabilities 에 불필요한 권한 등록              | 최소 권한 원칙 위반                       |
