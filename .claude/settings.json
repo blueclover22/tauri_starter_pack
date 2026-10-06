@@ -14,18 +14,5 @@
       "Bash(cargo fmt:*)",
       "Bash(cargo build:*)"
     ]
-  },
-  "hooks": {
-    "SessionStart": [
-      {
-        "matcher": "startup|resume|clear",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "echo Follow .claude/CLAUDE.md: check .claude/design/init.md first, and before any implementation you MUST read docs/architecture.md, docs/tauri-guide.md, docs/tauri-commands.md and docs/coding-rules.md."
-          }
-        ]
-      }
-    ]
   }
 }
