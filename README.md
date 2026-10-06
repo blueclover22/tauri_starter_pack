@@ -52,7 +52,8 @@ Tauri v2 + React + TypeScript + Tailwind v4 기반 데스크톱·모바일 앱 �
 ### 0. 공통
 
 - **Node.js 24 LTS (24.15 이상)**: <https://nodejs.org/>
-- **pnpm**: `npm install -g pnpm` 또는 <https://pnpm.io/installation>
+- **pnpm 10**: `corepack enable` 권장 (`package.json` 의 `packageManager` 버전을 자동 사용) 또는 <https://pnpm.io/installation>
+  - pnpm 10 은 의존성 build script 를 기본 차단한다. 실행이 필요한 의존성은 `package.json` 의 `pnpm.onlyBuiltDependencies` 에 추가한다 (`unrs-resolver` 는 prebuilt 바이너리로 충분해 `ignoredBuiltDependencies` 에 등록).
 - **Rust (rustup)**: <https://www.rust-lang.org/tools/install>
 - 의존성 설치: `pnpm install`
 
