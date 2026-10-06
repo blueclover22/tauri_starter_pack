@@ -35,5 +35,5 @@ export async function invokeTauri<TResponse>(
     );
   }
 
-  return result.data as TResponse;
+  return result.data;
 }

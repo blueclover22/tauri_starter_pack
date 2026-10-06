@@ -4,11 +4,8 @@ export type AppError = {
   retryable: boolean;
 };
 
-export interface IpcResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: AppError;
-}
+export type IpcResponse<T = unknown> =
+  { success: true; data: T } | { success: false; error?: AppError };
 
 export function isAppError(value: unknown): value is AppError {
   return (

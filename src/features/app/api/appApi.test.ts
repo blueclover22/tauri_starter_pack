@@ -55,4 +55,15 @@ describe("appApi.ping", () => {
       code: "ERROR_VALIDATION_PING_SHAPE",
     });
   });
+
+  it("message 가 문자열이 아니면 validation error 로 승격한다", async () => {
+    mockInvoke.mockResolvedValueOnce({
+      success: true,
+      data: { message: 123 },
+    });
+
+    await expect(appApi.ping()).rejects.toMatchObject({
+      code: "ERROR_VALIDATION_PING_SHAPE",
+    });
+  });
 });

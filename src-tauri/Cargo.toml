@@ -21,6 +21,12 @@ log = "0.4"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 
+# 문서 규칙의 기계 강제 (tauri-guide §13 println!/eprintln! 금지, 운영 코드 unwrap 금지).
+[lints.clippy]
+print_stdout = "deny"
+print_stderr = "deny"
+unwrap_used = "deny"
+
 [features]
 # 기본 빌드 시 사용. tauri dev/build 가 자동 설정한다.
 default = []

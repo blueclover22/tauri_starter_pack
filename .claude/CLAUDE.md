@@ -68,14 +68,17 @@
 
 ## 검증 명령
 
-| 단계            | 명령                |
-| :-------------- | :------------------ |
-| 타입 체크       | `pnpm typecheck`    |
-| 린트            | `pnpm lint`         |
-| 테스트          | `pnpm test`         |
-| 빌드 (frontend) | `pnpm build`        |
-| 빌드 (desktop)  | `pnpm tauri build`  |
-| 포맷 (검증)     | `pnpm format:check` |
+| 단계             | 명령                                                                             |
+| :--------------- | :------------------------------------------------------------------------------- |
+| 타입 체크        | `pnpm typecheck`                                                                 |
+| 린트             | `pnpm lint`                                                                      |
+| 테스트           | `pnpm test`                                                                      |
+| 빌드 (frontend)  | `pnpm build`                                                                     |
+| 빌드 (desktop)   | `pnpm tauri build`                                                               |
+| 포맷 (검증)      | `pnpm format:check`                                                              |
+| Rust 포맷 (검증) | `cargo fmt --manifest-path src-tauri/Cargo.toml --check`                         |
+| Rust 린트        | `cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings` |
+| Rust 테스트      | `cargo test --manifest-path src-tauri/Cargo.toml`                                |
 
 ## 스타터 팩 유지보수 전용 파일
 

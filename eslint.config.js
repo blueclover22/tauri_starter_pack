@@ -27,6 +27,43 @@ export default [
     ...c,
     files: ["src/**/*.{ts,tsx}"],
   })),
+  // 문서 규칙의 기계 강제 — src 한정
+  {
+    files: ["src/**/*.{ts,tsx}"],
+    languageOptions: {
+      parserOptions: { projectService: true, tsconfigRootDir: import.meta.dirname },
+    },
+    rules: {
+      // 처리 안 된 Promise 금지 (type-aware)
+      "@typescript-eslint/no-floating-promises": "error",
+      "@typescript-eslint/no-misused-promises": "error",
+      // localStorage / sessionStorage 직접 접근 금지 (coding-rules §상태)
+      "no-restricted-globals": [
+        "error",
+        { name: "localStorage", message: "localStorage 직접 접근 금지 (docs/coding-rules.md)." },
+        {
+          name: "sessionStorage",
+          message: "sessionStorage 직접 접근 금지 (docs/coding-rules.md).",
+        },
+      ],
+      // IPC 는 공통 wrapper(@/shared/lib/tauri/invoke) 경유 (tauri-guide)
+      "no-restricted-imports": [
+        "error",
+        {
+          paths: [
+            {
+              name: "@tauri-apps/api/core",
+              message: "invoke 는 @/shared/lib/tauri/invoke 의 invokeTauri 를 사용한다.",
+            },
+          ],
+        },
+      ],
+    },
+  },
+  {
+    files: ["src/shared/lib/tauri/**/*.{ts,tsx}", "**/*.test.{ts,tsx}", "src/test/**/*"],
+    rules: { "no-restricted-imports": "off" },
+  },
   // FSD layer 경계 강제 (eslint-plugin-boundaries)
   {
     files: ["src/**/*.{ts,tsx}"],

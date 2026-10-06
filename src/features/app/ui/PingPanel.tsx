@@ -33,7 +33,7 @@ export function PingPanel() {
 
       <button
         type="button"
-        onClick={() => ping(note || undefined)}
+        onClick={() => void ping(note || undefined)}
         disabled={isLoading}
         data-testid="ping-button"
         className="rounded-md bg-accent-strong px-4 py-2 text-sm font-medium text-bg transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"

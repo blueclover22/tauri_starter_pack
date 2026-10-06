@@ -179,17 +179,13 @@ pub struct AppError { pub code: String, pub message: String, pub retryable: bool
 
 ```ts
 // src/shared/types/ipc.ts
-interface IpcResponse<T = unknown> {
-  success: boolean;
-  data?: T;
-  error?: AppError;
-}
+type IpcResponse<T = unknown> = { success: true; data: T } | { success: false; error?: AppError };
 type AppError = { code: string; message: string; retryable: boolean };
 ```
 
 - 공유 invoke wrapper: `src/shared/lib/tauri/invoke.ts`
 
-> **주의**: Rust 는 `IpcResult<T>`, TypeScript 는 `IpcResponse<T>` 이다. 동일 구조이지만 타입명이 다르다.
+> **주의**: Rust 는 `IpcResult<T>`, TypeScript 는 `IpcResponse<T>` 이다. 동일한 직렬화 구조이지만 타입명이 다르고, TypeScript 는 `success` 로 판별되는 유니온이다.
 
 ---
 

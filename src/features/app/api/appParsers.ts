@@ -11,7 +11,8 @@ export type PingInfo = {
  * (Zod 도입 시 docs/optional/server-state.md §3 참조)
  */
 export function parsePingInfo(raw: unknown): PingInfo {
-  if (typeof raw !== "object" || raw === null || !("message" in raw)) {
+  const obj = typeof raw === "object" && raw !== null ? (raw as Record<string, unknown>) : null;
+  if (obj === null || typeof obj.message !== "string") {
     throw {
       code: "ERROR_VALIDATION_PING_SHAPE",
       message: "ping 응답 형식이 올바르지 않습니다.",
@@ -19,9 +20,8 @@ export function parsePingInfo(raw: unknown): PingInfo {
     } satisfies AppError;
   }
 
-  const obj = raw as Record<string, unknown>;
   return {
-    message: String(obj.message),
+    message: obj.message,
     echoedNote: typeof obj.echoedNote === "string" ? obj.echoedNote : undefined,
   };
 }

@@ -139,7 +139,7 @@ export async function invokeTauri<TResponse>(
     );
   }
 
-  return result.data as TResponse;
+  return result.data;
 }
 ```
 
@@ -340,7 +340,7 @@ Tauri v2 는 capability 기반 권한 관리를 사용한다. 필요한 권한�
 
 ### CSP
 
-`tauri.conf.json` 의 `app.security.csp` 는 뼈대 단계에서 `null`(비활성) 이다. 배포 전 `default-src 'self'` 기반의 명시적 CSP 로 강화하고, 외부 origin·인라인 스크립트 허용은 필요한 것만 화이트리스트한다. 원격 리소스를 쓰지 않는 앱이라면 `null` 유지보다 최소 CSP 명시가 안전하다.
+`tauri.conf.json` 의 `app.security.csp` 는 뼈대 단계부터 원격 리소스를 쓰지 않는 최소 CSP(`default-src 'self'` 기반, IPC·asset 프로토콜만 허용)로 활성화되어 있다. Tauri 가 번들 자산의 스크립트·스타일에 hash/nonce 를 자동 추가하므로 앱 고유 항목만 관리한다. 외부 origin(API 서버·폰트·CDN 등)이 필요해지면 해당 지시자(`connect-src`, `font-src` 등)에만 필요한 origin 을 화이트리스트하고, `null` 로 되돌리지 않는다.
 
 ---
 

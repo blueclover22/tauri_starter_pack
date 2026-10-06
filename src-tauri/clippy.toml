@@ -1,0 +1,2 @@
+# 테스트 코드의 unwrap 은 허용 (Cargo.toml [lints.clippy] unwrap_used 는 운영 코드 대상).
+allow-unwrap-in-tests = true
