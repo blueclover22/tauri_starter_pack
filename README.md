@@ -51,7 +51,7 @@ Tauri v2 + React + TypeScript + Tailwind v4 기반 데스크톱·모바일 앱 �
 
 ### 0. 공통
 
-- **Node.js 24 (LTS)**: <https://nodejs.org/>
+- **Node.js 24 LTS (24.15 이상)**: <https://nodejs.org/>
 - **pnpm**: `npm install -g pnpm` 또는 <https://pnpm.io/installation>
 - **Rust (rustup)**: <https://www.rust-lang.org/tools/install>
 - 의존성 설치: `pnpm install`
